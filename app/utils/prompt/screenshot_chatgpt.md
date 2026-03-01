@@ -1,0 +1,1 @@
+Describe the screenshot, {query}.

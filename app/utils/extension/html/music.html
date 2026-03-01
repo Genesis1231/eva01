@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVA Player</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            margin: 0;
+        }
+
+        .album-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .album-container {
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            overflow: hidden;
+            animation: spin 30s linear infinite;
+        }
+
+        .album-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .album-title {
+            margin-top: 30px;
+            font-size: 18px;
+            color: #FFF;
+            text-align: center;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="album-wrapper">
+        <div class="album-container">
+            <img src="<image_url>"></div>
+        <div class="album-title"><music_title></div>
+    </div>
+</body>
+</html>

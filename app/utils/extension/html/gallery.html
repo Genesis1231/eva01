@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVA Gallery</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .slider-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        .slider {
+            display: flex;
+            height: 100%;
+            transition: transform 0.3s ease-out;
+            cursor: grab;
+        }
+        .slider.grabbing {
+            cursor: grabbing;
+        }
+        .slide {
+            min-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+            object-position: center;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        img.loaded {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container">
+        <div class="slider">
+            <image_block>
+        </div>
+    </div>
+
+    <script>
+        const slider = document.querySelector('.slider');
+        const slides = document.querySelectorAll('.slide');
+        let isDragging = false;
+        let startPos = 0;
+        let currentTranslate = 0;
+        let prevTranslate = 0;
+        let animationID = 0;
+        let currentIndex = 0;
+
+        // Disable context menu on long press for mobile devices
+        window.oncontextmenu = function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            return false;
+        }
+
+        // Preload images
+        function preloadImages() {
+            slides.forEach(slide => {
+                const img = slide.querySelector('img');
+                if (img.complete) {
+                    imageLoaded(img);
+                } else {
+                    img.onload = () => imageLoaded(img);
+                }
+            });
+        }
+
+        function imageLoaded(img) {
+            console.log('Image loaded:', img.src);
+            img.classList.add('loaded');
+        }
+
+        // Adjust image size
+        function adjustImageSize() {
+            const containerWidth = document.body.clientWidth;
+            const containerHeight = document.body.clientHeight;
+            const aspectRatio = 3 / 4;
+
+            let imgWidth, imgHeight;
+
+            if (containerWidth / containerHeight > aspectRatio) {
+                imgHeight = containerHeight;
+                imgWidth = imgHeight * aspectRatio;
+            } else {
+                imgWidth = containerWidth;
+                imgHeight = imgWidth / aspectRatio;
+            }
+
+            slides.forEach(slide => {
+                const img = slide.querySelector('img');
+                img.style.width = `${imgWidth}px`;
+                img.style.height = `${imgHeight}px`;
+                console.log('Image resized:', img.src, imgWidth, imgHeight);
+            });
+        }
+
+        // Initialize slider
+        function initSlider() {
+            console.log('Initializing slider');
+            preloadImages();
+            adjustImageSize();
+        }
+
+        window.addEventListener('load', initSlider);
+        window.addEventListener('resize', adjustImageSize);
+
+        slides.forEach((slide, index) => {
+            const slideImage = slide.querySelector('img');
+            slideImage.addEventListener('dragstart', (e) => e.preventDefault());
+            
+            // Touch events
+            slide.addEventListener('touchstart', touchStart(index));
+            slide.addEventListener('touchend', touchEnd);
+            slide.addEventListener('touchmove', touchMove);
+            
+            // Mouse events
+            slide.addEventListener('mousedown', touchStart(index));
+            slide.addEventListener('mouseup', touchEnd);
+            slide.addEventListener('mouseleave', touchEnd);
+            slide.addEventListener('mousemove', touchMove);
+        });
+
+        function touchStart(index) {
+            return function(event) {
+                currentIndex = index;
+                startPos = getPositionX(event);
+                isDragging = true;
+                animationID = requestAnimationFrame(animation);
+                slider.classList.add('grabbing');
+            }
+        }
+
+        function touchEnd() {
+            isDragging = false;
+            cancelAnimationFrame(animationID);
+            const movedBy = currentTranslate - prevTranslate;
+            
+            if (movedBy < -100 && currentIndex < slides.length - 1) {
+                currentIndex += 1;
+            }
+            
+            if (movedBy > 100 && currentIndex > 0) {
+                currentIndex -= 1;
+            }
+            
+            setPositionByIndex();
+            slider.classList.remove('grabbing');
+        }
+
+        function touchMove(event) {
+            if (isDragging) {
+                const currentPosition = getPositionX(event);
+                currentTranslate = prevTranslate + currentPosition - startPos;
+            }
+        }
+
+        function getPositionX(event) {
+            return event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+        }
+
+        function animation() {
+            setSliderPosition();
+            if (isDragging) requestAnimationFrame(animation);
+        }
+
+        function setSliderPosition() {
+            slider.style.transform = `translateX(${currentTranslate}px)`;
+        }
+
+        function setPositionByIndex() {
+            currentTranslate = currentIndex * -window.innerWidth;
+            prevTranslate = currentTranslate;
+            setSliderPosition();
+        }
+    </script>
+</body>
+</html>

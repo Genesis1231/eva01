@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles on top of Tailwind */
+@layer base {
+  html,
+  body {
+    @apply bg-black text-white;
+    font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+      Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    @apply box-border p-0 m-0;
+  }
+}
+
+@layer components {
+  .eva-btn {
+    @apply rounded-full bg-blue-600 text-white px-8 py-4 font-medium 
+           transition-all duration-300 hover:bg-blue-500 hover:scale-105 
+           active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50;
+  }
+  
+  .eva-container {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .eva-card {
+    @apply bg-gray-800 bg-opacity-40 backdrop-blur-md rounded-xl shadow-lg border border-gray-700 border-opacity-50 p-6;
+  }
+}
+
+/* Animation utilities */
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Animation for waveform bars */
+  @keyframes wave {
+    0%, 100% {
+      transform: scaleY(0.5);
+    }
+    50% {
+      transform: scaleY(1);
+    }
+  }
+  
+  .animate-wave {
+    animation: wave 1.2s ease-in-out infinite;
+  }
+  
+  /* Glow pulse effect */
+  @keyframes glow-pulse {
+    0%, 100% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+  }
+  
+  .animate-glow-pulse {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  
+  /* Camera flash animation */
+  @keyframes flash {
+    0% {
+      opacity: 0;
+    }
+    25% {
+      opacity: 0.8;
+    }
+    50% {
+      opacity: 0.3;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  
+  .animate-flash {
+    animation: flash 0.7s ease-out;
+  }
+  
+  /* Animated gradient background */
+  .animate-gradient {
+    background-size: 300% 300%;
+    animation: gradient 10s ease infinite;
+    text-shadow: 0 2px 15px rgba(36, 99, 235, 0.2);
+  }
+  
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    25% {
+      background-position: 50% 100%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    75% {
+      background-position: 50% 0%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+} 
