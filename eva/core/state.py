@@ -3,7 +3,7 @@ from enum import Enum
 
 from eva.client import WSLClient, MobileClient
 from eva.agent import ChatAgent 
-from eva.utils.memory import Memory
+from eva.modules.memory import Memory
 from eva.tools import ToolManager
 
 class EvaStatus(Enum):

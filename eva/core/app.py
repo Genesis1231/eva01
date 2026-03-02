@@ -1,8 +1,8 @@
 from langgraph.graph import StateGraph, END, START
 from dotenv import load_dotenv
 
-from eva.core.classes import EvaState
-from eva.core.nodes import (
+from .state import EvaState
+from .nodes import (
     eva_initialize, 
     eva_end, 
     eva_converse, 
@@ -14,10 +14,6 @@ from eva.core.nodes import (
     router_initialize,
 )
 
-from eva.core.nodes_setup import (
-    eva_setup,
-    router_setup
-)
 
 load_dotenv()
 

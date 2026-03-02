@@ -7,7 +7,7 @@ from eva.utils.prompt import load_prompt
 class GroqVision:
     def __init__(
         self,
-        model_name: str = "llama-3.2-11b-vision-preview",
+        model_name: str = "meta-llama/llama-4-scout-17b-16e-instruct",
         temperature: float = 0.1
     ):
         self.client = Groq()

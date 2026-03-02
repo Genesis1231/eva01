@@ -6,8 +6,10 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 EVA01 is an autonomous AI agent that lives on her own — with her own personality, goals, memory, and evolving inner world. She interacts through physical senses (voice + vision) and digital capabilities. Built on LangGraph, Python 3.10+ backend, React + Vite frontend.
 
-## Planning & Research
+## Context Management
+Always use existing or create new subagent/subthread when branching into a detailed feature discussion and implementation. Keep the main thread only about system achitecture.
 
+## Planning & Research
 Reference docs in `planning/` — consult these when working on architecture decision.
 When doing research, use information in 2026.
 

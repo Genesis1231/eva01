@@ -41,6 +41,6 @@ class GroqTranscriber:
         
         except Exception as e:
             logger.error(f"Error: Failed to transcribe audio: {str(e)}")
-            return None, None
+            return None
 
-        return response.text, language
+        return (response.text, language)

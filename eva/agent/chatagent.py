@@ -7,7 +7,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.messages import AIMessage
 from langchain.chat_models import init_chat_model
 
-from .classes import RespondToUser
+from .schema import RespondToUser
 from .constructor import PromptConstructor
 
 class ChatAgent:

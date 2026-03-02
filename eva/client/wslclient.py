@@ -3,11 +3,11 @@ import asyncio
 from config import logger
 from typing_extensions import Dict, List, Optional
 
-from eva.utils.tts import Speaker, AudioPlayer
-from eva.utils.vision import Watcher
-from eva.utils.stt import PCListener
-from eva.utils.extension import Window
-from eva.utils.extension.html import load_html
+from eva.modules.tts import Speaker, AudioPlayer
+from eva.modules.vision import Watcher
+from eva.modules.stt import PCListener
+from eva.modules.extension import Window
+from eva.modules.extension.html import load_html
 
 class WSLClient:
     """

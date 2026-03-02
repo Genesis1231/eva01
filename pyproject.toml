@@ -17,6 +17,9 @@ eva = "main:main"
 [tool.pytest.ini_options]
 testpaths = ["test"]
 pythonpath = ["."]
+markers = [
+    "live: live integration tests requiring real hardware (webcam) and API keys",
+]
 
 [build-system]
 requires = ["setuptools>=61.0"]

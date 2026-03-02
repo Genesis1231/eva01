@@ -23,11 +23,7 @@ class Transcriber:
         >>> transcription, language = transcriber.transcribe(audioclip)
     """
     
-    def __init__(
-        self, 
-        model_name: str = "faster-whisper", 
-        language: str = "en"
-    ) -> None:
+    def __init__(self, model_name: str, language: str):
         self._model_selection: str = model_name.upper()
         self._model_language: str = language
         
@@ -82,31 +78,25 @@ class Transcriber:
     def transcribe(self, audioclip) -> Optional[tuple[str, str]]:  
         """ Transcribe the given audio clip and identify the speaker """
         
-        while not self.name_queue.empty(): # Clear queue 
-            self.name_queue.get()
+        # Identify the speaker is not needed for now
+        # while not self.name_queue.empty(): # Clear queue 
+        #     self.name_queue.get()
         
-        thread = threading.Thread(target=self.identifier.identify, args=(audioclip, self.name_queue))
-        thread.start()
+        # thread = threading.Thread(target=self.identifier.identify, args=(audioclip, self.name_queue))
+        # thread.start()
         
         transcription, language = self.model.transcribe_audio(audioclip)
         if not transcription:
-            thread.join()
-            return None, None
+            # thread.join()
+            return None
         
         # Get the speaker identification result
-        identification = self.name_queue.get()   
-        thread.join()
+        # identification = self.name_queue.get()   
+        # thread.join()
         
         # if the name is unknown, return content with a new line, there is a new person speaking, save it into a database
-        if identification == "unknown":
-            content = f": <human_reply>{transcription.strip()}</human_reply> (I couldn't identify the voice.)"
-            display = f"User:{transcription}"
-        else:
-            name = "Adam"
-            content = f"{name} ({identification}):: <human_reply>{transcription.strip()}</human_reply>"
-            display = f"{name}:{transcription}"
-  
 
-        print(f"({datetime.now().strftime('%H:%M:%S')}) {display}")
+        content = f"<human_reply>{transcription.strip()}</human_reply>"
+        print(f"({datetime.now().strftime('%H:%M:%S')}) User: {transcription}")
         
-        return content, language
+        return (content, language)

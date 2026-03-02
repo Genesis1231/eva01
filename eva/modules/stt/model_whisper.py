@@ -51,6 +51,6 @@ class WhisperTranscriber:
                 
         except Exception as e:
             logger.error(f"Error: Failed to transcribe audio with OpenAI Whisper: {str(e)}")
-            return None, None
+            return None
         
-        return response.text, language
+        return (response.text, language)

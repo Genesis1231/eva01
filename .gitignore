@@ -6,6 +6,7 @@
 .cursorignore
 
 __pycache__/
+*.egg-info/
 .claude/
 .cursor/
 .vscode/

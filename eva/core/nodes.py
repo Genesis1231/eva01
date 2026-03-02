@@ -2,8 +2,8 @@ from config import logger, eva_configuration
 from datetime import datetime
 from typing import Dict, Any
 
-from eva.core.classes import EvaStatus 
-from eva.core.functions import initialize_modules
+from eva.core.state import EvaStatus 
+from eva.core.loader import initialize_modules
 from eva.core.ids import id_manager
 
 
@@ -11,7 +11,7 @@ async def eva_initialize(state: Dict[str, Any]) -> Dict[str, Any]:
     """
     Initialize Eva's core modules and determine initial status.
     
-    This function loads all required modules from the configuration and sets the initial
+    Loads all required modules from the configuration and sets the initial
     status based on whether any users are registered. The modules include the agent,
     client interface, memory system, and toolbox.
     
@@ -20,10 +20,6 @@ async def eva_initialize(state: Dict[str, Any]) -> Dict[str, Any]:
     modules = initialize_modules(eva_configuration) 
     # Initialize status, dont need right now
     # status = EvaStatus.SETUP if id_manager.is_empty() else EvaStatus.THINKING
-    
-    if eva_configuration.get("DEVICE").upper() == "MOBILE":
-        if "websocket" in state and "data_manager" in state:
-            modules["client"].attach_session(state["websocket"], state["data_manager"])
             
     return {
         "status": EvaStatus.THINKING, 

@@ -6,9 +6,9 @@ from typing import Dict, Any
 
 from eva.client import WSLClient, MobileClient
 from eva.agent import ChatAgent
-from eva.utils.memory import Memory
+from eva.modules.memory import Memory
 from eva.tools import ToolManager
-from eva.utils.tts.speaker import Speaker
+from eva.modules.tts.speaker import Speaker
 
 
 def load_classes(class_dict)-> Dict:
@@ -50,9 +50,9 @@ def initialize_modules(config : Dict[str, str]) -> Dict[str, Any]:
 
     # Client-specific initialization
     match client_type:
-        case "DESKTOP":
-            from eva.utils.stt import PCListener
-            from eva.utils.vision import Watcher
+        case "local":
+            from eva.modules.stt import PCListener
+            from eva.modules.vision import Watcher
             
             module_list.update({
                 "client": WSLClient,
@@ -60,7 +60,7 @@ def initialize_modules(config : Dict[str, str]) -> Dict[str, Any]:
                 "vision_model": partial(Watcher, vision_model, base_url),
             })
 
-        case "MOBILE":
+        case "server":
             module_list.update({
                 "client": MobileClient,
             })
