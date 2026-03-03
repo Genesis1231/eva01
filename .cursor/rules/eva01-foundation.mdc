@@ -8,7 +8,7 @@ alwaysApply: true
 EVA01 is a project that aims to create a new AI agent that lives on her own with her own personality, and her own goals. she can interact with the world through her own eyes, and her own skills. she can learn from the world and improve herself.
 
 # EVA01 Foundation Rule
-- Your solution should be clean, readable, and efficient. DON'T over-engineer.
+- Your solution should be simple, readable, and highly-effective. DON'T over-engineer.
 - Keep changes focused: do not refactor unrelated files in the same task.
 - Preserve secrets: never commit private `.env` files;
 - Validate important edits with quick lint checks.

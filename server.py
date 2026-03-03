@@ -10,7 +10,7 @@ import uvicorn
 from config import logger, eva_configuration
 from eva.core.eva import EVA
 from eva.client.data_manager import DataManager
-from eva.utils.stt.transcriber import Transcriber
+from eva.senses.audio.transcriber import Transcriber
 from eva.utils.vision.describer import Describer
 
 MEDIA_ROOT = Path(__file__).parent / "data" / "media"

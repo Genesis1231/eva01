@@ -11,7 +11,7 @@ except Exception:
     id_manager = None
     logger.warning("Identifier: id_manager not available, face naming disabled.")
 
-import face_recognition as fr
+#import face_recognition as fr
 import numpy as np
 import cv2
 

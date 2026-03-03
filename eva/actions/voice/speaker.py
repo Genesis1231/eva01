@@ -1,3 +1,9 @@
+"""Speaker factory: selects TTS model (edge/openai/elevenlabs/kokoro) and delegates. Exports: Speaker.
+  speak(answer, language) -> streams audio via model.eva_speak
+  get_audio(text) -> writes mp3 to media folder, returns relative path
+  stop_speaking() -> delegates to model.stop_playback
+"""
+
 from datetime import datetime
 from config import logger
 from typing import Dict, Callable, Optional
@@ -18,31 +24,33 @@ class Speaker:
         speak: Speak the given text using the selected speaker model.
     """
     
-    def __init__(self, speaker_model: str = "coqui", language: str = "en"):
-        self._model_selection: str = speaker_model.upper()
+    def __init__(self, speaker_model: str = "edge", language: str = "en")-> None:
+        self._model: str = speaker_model.upper()
         self._media_folder: str = self._get_data_path()
         self._language: str = language
+        
         self.model = self._initialize_model()
         
-        logger.info(f"Speaker: {self._model_selection} is ready.")
+        logger.info(f"Speaker: {self._model} is ready.")
     
     def _get_model_factory(self) -> Dict[str, Callable]:
         return {
-            "COQUI" : self._create_coqui_model,
+            "EDGE"       : self._create_edge_model,
             "ELEVENLABS" : self._create_elevenlab_model,
-            "OPENAI" : self._create_openai_model,
+            "OPENAI"     : self._create_openai_model,
+            "KOKORO"     : self._create_kokoro_model,
         }
-    
-    def _create_coqui_model(self):
-        from eva.utils.tts.model_coqui import CoquiSpeaker
-        
+
+    def _create_edge_model(self):
+        from .model_edge import EdgeSpeaker
+
         try:
-            return CoquiSpeaker(language=self._language)
+            return EdgeSpeaker()
         except Exception as e:
-            raise Exception(f"Error: Failed to initialize Coqui TTS model {str(e)} ")
+            raise Exception(f"Error: Failed to initialize Edge TTS model {str(e)}")
 
     def _create_elevenlab_model(self):
-        from eva.utils.tts.model_elevenlabs import ElevenLabsSpeaker
+        from .model_elevenlabs import ElevenLabsSpeaker
         
         try:
             return ElevenLabsSpeaker()
@@ -50,37 +58,45 @@ class Speaker:
             raise Exception(f"Error: Failed to initialize ElevenLabs model {str(e)} ")
 
     def _create_openai_model(self):
-        from eva.utils.tts.model_openai import OpenAISpeaker
+        from .model_openai import OpenAISpeaker
         
         try:
-            return OpenAISpeaker() # OpenAI does not need language selection
+            return OpenAISpeaker()
         except Exception as e:
             raise Exception(f"Error: Failed to initialize OpenAI model {str(e)}")
+
+    def _create_kokoro_model(self):
+        from .model_kokoro import KokoroSpeaker
+        
+        try:
+            return KokoroSpeaker()
+        except Exception as e:
+            raise Exception(f"Error: Failed to initialize Kokoro model {str(e)}")
     
     def _initialize_model(self):
         model_factory = self._get_model_factory()
-        model = model_factory.get(self._model_selection)
+        model = model_factory.get(self._model)
         if model is None:
-            raise ValueError(f"Error: Model {self._model_selection} is not supported.")
+            raise ValueError(f"Error: Model {self._model} is not supported.")
         
         return model()
 
-    def stop_speaking(self) -> None:
+    async def stop_speaking(self) -> None:
         """ Stop the speaker model """
-        self.model.stop_playback()
+        await self.model.stop_playback()
         
-    def speak(self, answer: str, language: Optional[str] = "en", wait: bool = True) -> None:
+    async def speak(self, answer: str, language: Optional[str] = "en"):
         """ Speak the given text using the selected speaker model """
         try:
             print(f"\n({datetime.now().strftime('%H:%M:%S')}) EVA: {answer}")
-            self.model.eva_speak(answer, language, wait)
+            await self.model.eva_speak(answer, language)
             
         except Exception as e:
             raise Exception(f"Error: Failed to speak {str(e)} ")
         
-    def get_audio(self, text: str) -> str:
+    async def get_audio(self, text: str) -> str:
         """ Generate audio from text and save it to the media folder """
-        return self.model.generate_audio(text, self._language, self._media_folder)
+        return await self.model.generate_audio(text, self._language, self._media_folder)
     
     def _get_data_path(self) -> Path:
         """Return the path to the voice database."""

@@ -4,7 +4,7 @@ import asyncio
 from typing_extensions import Dict, Optional, List
 import secrets
 
-from eva.utils.stt.transcriber import Transcriber
+from eva.senses.audio.transcriber import Transcriber
 from eva.utils.vision.describer import Describer
 from eva.client.functions import convert_audio_data 
 

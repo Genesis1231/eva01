@@ -1,5 +1,8 @@
 """
-Action Buffer - The outgoing event bus for EVA's motor commands.
+ActionBuffer: Outgoing event bus for EVA's actions. 
+  put(action_type, content, metadata) -> None
+  get() -> ActionEvent
+  empty() -> bool
 """
 
 import asyncio
@@ -10,7 +13,7 @@ from typing import Optional
 
 @dataclass
 class ActionEvent:
-    """A single actuator command."""
+    """A single action command."""
     type: str               # e.g., "speak", "interrupt", "ui"
     content: Optional[str] = None # the actual data (text to speak, etc.)
     metadata: dict = field(default_factory=dict)
@@ -19,13 +22,13 @@ class ActionEvent:
 
 class ActionBuffer:
     """
-    Async buffer for outgoing commands from LangGraph to the physical Actuators.
+    Async buffer for outgoing commands from LangGraph to the physical actions.
     """
     def __init__(self):
         self._queue: asyncio.Queue[ActionEvent] = asyncio.Queue()
 
     async def put(self, action_type: str, content: Optional[str] = None, metadata: Optional[dict] = None) -> None:
-        """Push an action command to the actuators."""
+        """Push an action command to the actions."""
         event = ActionEvent(
             type=action_type,
             content=content,

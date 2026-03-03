@@ -1,4 +1,5 @@
 from .vision.camera import CameraSense
+from .audio.audio_sense import AudioSense
 from .sense_buffer import SenseBuffer
 
-__all__ = ["CameraSense", "SenseBuffer"]
+__all__ = ["CameraSense", "AudioSense", "SenseBuffer"]

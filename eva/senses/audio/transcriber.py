@@ -40,7 +40,7 @@ class Transcriber:
         }
         
     def _create_groq_model(self):
-        from eva.utils.stt.model_groq import GroqTranscriber
+        from eva.senses.audio.model_groq import GroqTranscriber
         
         try:
             return GroqTranscriber(self._model_language)
@@ -48,7 +48,7 @@ class Transcriber:
             raise Exception(f"Error: failed to load Whisper Model {str(e)}")
         
     def _create_fasterwhisper_model(self):
-        from eva.utils.stt.model_fasterwhisper import FWTranscriber
+        from eva.senses.audio.model_fasterwhisper import FWTranscriber
         
         try:
             return FWTranscriber(self._model_language)
@@ -56,7 +56,7 @@ class Transcriber:
             raise Exception(f"Error: Fail to load Faster Whisper Model {str(e)}")
         
     def _create_whisper_model(self):
-        from eva.utils.stt.model_whisper import WhisperTranscriber
+        from eva.senses.audio.model_whisper import WhisperTranscriber
         
         try:
             return WhisperTranscriber(self._model_language)

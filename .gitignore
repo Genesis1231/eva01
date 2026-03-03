@@ -1,9 +1,9 @@
+CLAUDE.md
 .env
 .env.*
 !.env.example
 !frontend/.env.local
 .gitignore
-.cursorignore
 
 __pycache__/
 *.egg-info/

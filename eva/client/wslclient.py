@@ -5,7 +5,7 @@ from typing_extensions import Dict, List, Optional
 
 from eva.modules.tts import Speaker, AudioPlayer
 from eva.modules.vision import Watcher
-from eva.modules.stt import PCListener
+from eva.senses.audio import PCListener
 from eva.modules.extension import Window
 from eva.modules.extension.html import load_html
 

@@ -51,7 +51,7 @@ def initialize_modules(config : Dict[str, str]) -> Dict[str, Any]:
     # Client-specific initialization
     match client_type:
         case "local":
-            from eva.modules.stt import PCListener
+            from eva.senses.audio import PCListener
             from eva.modules.vision import Watcher
             
             module_list.update({
