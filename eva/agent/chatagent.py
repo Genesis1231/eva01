@@ -1,3 +1,11 @@
+"""
+ChatAgent: A chat agent that manages interactions with the user.
+
+Handles initialization, configuration, and inference with different language models (LLMs).
+Manages prompt construction, response formatting, and tool integration.
+
+"""
+    
 from config import logger
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
@@ -12,11 +20,7 @@ from .constructor import PromptConstructor
 
 class ChatAgent:
     """
-    A chat agent that manages interactions with the user.
-    
-    This class handles the initialization, configuration, and interaction with different
-    language models (LLMs) such as GPT, LLAMA, Mistral, etc. It manages prompt construction,
-    response formatting, and tool integration.
+    ChatAgent class:
     
     Attributes:
         model_selection (str): The identifier for the selected language model (e.g., "LLAMA", "GPT").
@@ -26,10 +30,6 @@ class ChatAgent:
         llm (BaseLanguageModel): The initialized language model instance.
         tool_info (List[Dict[str, Any]]): Available tools and their configurations.
     
-    Example:
-        >>> agent = ChatAgent(model_name="llama", base_url="http://localhost:11434", language="english")
-        >>> response = agent.respond(timestamp, sense, history, action_results, language)
-        
     """
     
     def __init__(
@@ -104,61 +104,87 @@ class ChatAgent:
 
         return response_dict
     
+    def _build_prompt_value(
+        self,
+        template: Optional[str],
+        timestamp: datetime,
+        sense: Dict,
+        history: List[Dict],
+        action_results: List[Dict],
+    ) -> str:
+        """Build and format the prompt string."""
+        prompt = self.constructor.build_prompt(
+            template=template,
+            timestamp=timestamp,
+            sense=sense,
+            history=history,
+            action_results=action_results,
+        )
+        prompt_template = PromptTemplate.from_template(prompt)
+        return prompt_template.format(tools="Available via native tool calling bindings.")
+
     def respond(
         self,
         template: Optional[str] = None,
-        timestamp: Optional[datetime] = None, 
-        sense: Optional[Dict] = None, 
-        history: Optional[List[Dict]] = None, 
-        action_results: Optional[List[Dict]] = None, 
+        timestamp: Optional[datetime] = None,
+        sense: Optional[Dict] = None,
+        history: Optional[List[Dict]] = None,
+        action_results: Optional[List[Dict]] = None,
         language: Optional[str] = "english",
-        output_format: Optional[type[BaseModel]] = None
+        output_format: Optional[type[BaseModel]] = None,
     ) -> Dict:
-        """Main response function that builds the prompt and gets a response from the language model."""
-        
+        """Synchronous response — builds prompt and invokes the LLM."""
         timestamp = timestamp or datetime.now()
         sense = sense or {}
         history = history or []
         action_results = action_results or []
-        
-        prompt = self.constructor.build_prompt(
-            template=template,
-            timestamp=timestamp, 
-            sense=sense, 
-            history=history, 
-            action_results=action_results
-        )
-        
-        # We don't inject {{tools}} string into the prompt anymore,
-        # but LangChain PromptTemplate requires any placeholders to be fulfilled.
-        # Ensure our constructor no longer leaves an empty {{tools}} placeholder,
-        # or we just format it away.
-        prompt_template = PromptTemplate.from_template(prompt)
-        prompt_value = prompt_template.format(tools="Available via native tool calling bindings.")
-        print(f"prompt is {prompt_value}")
-        
-        try: 
+
+        prompt_value = self._build_prompt_value(template, timestamp, sense, history, action_results)
+
+        try:
             if output_format is not None:
-                # Setup Mode: Force specific structured output
                 llm_with_tools = self.llm.with_structured_output(output_format)
                 response = llm_with_tools.invoke(prompt_value)
-                
-                # If it's a Pydantic object, return its dict. If it's already a dict, return as is.
-                if isinstance(response, BaseModel):
-                    return response.model_dump()
-                
-                return response
+                return response.model_dump() if isinstance(response, BaseModel) else response
 
-            else:
-                # Conversation Mode: Bind arbitrary tools + RespondToUser structure
-                respond_tool = RespondToUser.with_language(self.language, language)
-                tools_to_bind = getattr(self, "tools", []) + [respond_tool]
-                
-                llm_with_tools = self.llm.bind_tools(tools_to_bind)
-                ai_message = llm_with_tools.invoke(prompt_value)
-                
-                logger.debug(f"Raw AI Message: {ai_message}")
-                return self._format_response(ai_message)
-            
+            respond_tool = RespondToUser.with_language(self.language, language)
+            llm_with_tools = self.llm.bind_tools(getattr(self, "tools", []) + [respond_tool])
+            ai_message = llm_with_tools.invoke(prompt_value)
+            logger.debug(f"Raw AI Message: {ai_message}")
+            return self._format_response(ai_message)
+
+        except Exception as e:
+            raise Exception(f"ChatAgent: Failed to get response from model: {str(e)}")
+
+    async def arespond(
+        self,
+        template: Optional[str] = None,
+        timestamp: Optional[datetime] = None,
+        sense: Optional[Dict] = None,
+        history: Optional[List[Dict]] = None,
+        action_results: Optional[List[Dict]] = None,
+        language: Optional[str] = "english",
+        output_format: Optional[type[BaseModel]] = None,
+    ) -> Dict:
+        """Async response — same as respond() but non-blocking. Use inside async loops."""
+        timestamp = timestamp or datetime.now()
+        sense = sense or {}
+        history = history or []
+        action_results = action_results or []
+
+        prompt_value = self._build_prompt_value(template, timestamp, sense, history, action_results)
+
+        try:
+            if output_format is not None:
+                llm_with_tools = self.llm.with_structured_output(output_format)
+                response = await llm_with_tools.ainvoke(prompt_value)
+                return response.model_dump() if isinstance(response, BaseModel) else response
+
+            respond_tool = RespondToUser.with_language(self.language, language)
+            llm_with_tools = self.llm.bind_tools(getattr(self, "tools", []) + [respond_tool])
+            ai_message = await llm_with_tools.ainvoke(prompt_value)
+            logger.debug(f"Raw AI Message: {ai_message}")
+            return self._format_response(ai_message)
+
         except Exception as e:
             raise Exception(f"ChatAgent: Failed to get response from model: {str(e)}")

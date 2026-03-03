@@ -1,7 +1,7 @@
 """
-AudioPlayer: Audio playback for streams and files.
-  stream(url) -> plays in background thread
-  play_generator(generator) -> true streaming via MPV
+AudioPlayer: Audio playback for streams and files. All methods are blocking — wrap with asyncio.to_thread() in async contexts.
+  stream(path) -> plays file/url via mpv, blocks until done
+  play_generator(generator) -> true streaming via MPV stdin
   play_pcm(samples, sample_rate) -> plays raw PCM via sounddevice
   stop_playback() -> stops any playing audio
 """
@@ -9,8 +9,6 @@ AudioPlayer: Audio playback for streams and files.
 import os
 import subprocess
 import tempfile
-import asyncio
-from threading import Thread
 from typing import Union, Optional
 
 import sounddevice as sd
@@ -36,20 +34,14 @@ class AudioPlayer:
     stop_playback: Interrupt all playback.
     """
     def __init__(self):
-        self._audio_thread: Optional[Thread] = None
+        self.player: Optional[mpv.MPV] = None
         self._process: Optional[subprocess.Popen] = None
         self._stop_event: bool = False
 
     def stop_playback(self) -> None:
         """Stop all active audio playback immediately."""
         self._stop_event = True
-        
-        # Stop sounddevice if playing
-        try:
-            sd.stop()
-        except Exception:
-            pass
-            
+
         # Stop mpv python player
         try:
             # Recreate player to fully stop current playback
@@ -73,59 +65,45 @@ class AudioPlayer:
         sd.wait()
     
             
-    async def play_sd_file(
-        self, 
-        audio_data: Optional[Union[str, np.ndarray]], 
-        sample_rate: int = 22050
-    )-> None:
-        """Play Audio from file or numpy array"""
-
+    def play_sd_file(
+        self,
+        audio_data: Optional[Union[str, np.ndarray]],
+        sample_rate: int = 22050,
+    ) -> None:
+        """Play audio from a file path or numpy array. Blocks until done."""
         if audio_data is None:
             return
-        
-        if not os.path.exists(audio_data):
-            raise FileNotFoundError(f"File not found: {audio_data}")
-        
-        audio_data, sample_rate = sf.read(audio_data) 
-        
-        # Ensure audio data is in float32 format for compatibility with sounddevice
+
+        if isinstance(audio_data, str):
+            if not os.path.exists(audio_data):
+                raise FileNotFoundError(f"File not found: {audio_data}")
+            audio_data, sample_rate = sf.read(audio_data)
+
         if audio_data.dtype != np.float32:
-            # Normalize the data by the maximum value of its type
             max_val = np.iinfo(audio_data.dtype).max if np.issubdtype(audio_data.dtype, np.integer) else 1.0
             audio_data = (audio_data / max_val).astype(np.float32)
 
-        
-        # Play the audio
         sd.play(audio_data, sample_rate)
         sd.wait()
         
        
-    def stream(self, url: str)-> None:
-        if not url:
+    def stream(self, path: str) -> None:
+        """Blocking: plays file/url via mpv. Wrap with asyncio.to_thread() in async contexts."""
+        if not path:
             return
-        
-        def _play_mp3_stream(self, mp3_url: str)-> None:
-            try:
-                player = mpv.MPV(ytdl=True)
-                player.volume = 50
-                player.play(mp3_url)
-                player.wait_for_playback()
-                
-                # clean up
-                player.terminate()
-                
-            except Exception as e:
-                raise Exception(f"Error: Failed to play mp3 stream: {e}")
-        
-        if self._audio_thread and self._audio_thread.is_alive():
-            self._audio_thread.join()
-            
-        self._audio_thread = Thread(target=self._play_mp3_stream, daemon=True, args=(url,))
-        self._audio_thread.start()
+        try:
+            self.player = mpv.MPV()
+            self.player.play(path)
+            self.player.wait_for_playback()
+            self.player.terminate()
+            self.player = None
+        except Exception as e:
+            raise Exception(f"Error: Failed to play stream: {e}")
     
     
     def play_generator(self, generator) -> None:
         """Play an iterable stream of audio chunks directly via MPV stdin (true streaming)."""
+        
         self._stop_event = False
         self._process = subprocess.Popen(
             ["mpv", "--no-cache", "--no-terminal", "--", "fd://0"],
@@ -152,6 +130,3 @@ class AudioPlayer:
             self._process = None
             
 
-    def __del__(self) -> None:
-        if self._audio_thread and self._audio_thread.is_alive():
-            self._audio_thread.join()

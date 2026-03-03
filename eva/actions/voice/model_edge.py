@@ -9,7 +9,6 @@ import asyncio
 import os
 import secrets
 import tempfile
-from threading import Thread
 from typing import Optional
 
 import edge_tts
@@ -40,7 +39,6 @@ class EdgeSpeaker:
     def __init__(self, voice: str = DEFAULT_VOICE) -> None:
         self.voice = voice
         self.audio_player = AudioPlayer()
-        self.audio_thread: Optional[Thread] = None
 
     def _voice_for(self, language: Optional[str]) -> str:
         """Get the appropriate voice for the given language."""
@@ -48,27 +46,16 @@ class EdgeSpeaker:
         # Could be extended with language-specific voice mapping
         return self.voice
 
-    def _synthesize(self, text: str, voice: str) -> str:
-        """Synthesize text to a temp mp3 file and return its path."""
-        
-        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
-            temp_path = f.name
-            
-        asyncio.run(edge_tts.Communicate(text, voice).save(temp_path))
-        
-        return temp_path
-
-
     async def eva_speak(self, text: str, language: Optional[str] = None) -> None:
         """Speak the given text using Edge TTS."""
         try:
             voice = self._voice_for(language)
-            file_path = await asyncio.to_thread(self._synthesize, text, voice)
 
-            if self.audio_thread and self.audio_thread.is_alive():
-                self.audio_thread.join()
-            
-            self.audio_thread = await asyncio.to_thread(self.audio_player.play_file, file_path)
+            with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+                temp_path = f.name
+
+            await edge_tts.Communicate(text, voice).save(temp_path)
+            await asyncio.to_thread(self.audio_player.stream, temp_path)
 
         except Exception as e:
             logger.error(f"Error during Edge TTS synthesis: {e}")
@@ -82,11 +69,7 @@ class EdgeSpeaker:
 
         try:
             voice = self._voice_for(language)
-            
-            def _generate():
-                asyncio.run(edge_tts.Communicate(text, voice).save(file_path))
-                
-            await asyncio.to_thread(_generate)
+            await edge_tts.Communicate(text, voice).save(file_path)
             
             logger.info(f"Audio file saved to: {file_path}")
             return f"audio/{filename}"

@@ -11,13 +11,14 @@ import secrets
 from pathlib import Path
 from typing import Optional
 
+import sounddevice as sd
 import soundfile as sf
 from config import logger
 from kokoro_onnx import Kokoro
 
 from .audio_player import AudioPlayer
 
-_MODEL_DIR = Path(__file__).resolve().parents[3] / "data" / "models" / "kokoro"
+_MODEL_DIR = Path(__file__).resolve().parents[3] / "data" / "models" 
 _LANG_MAP = {
     "en": "en-us", 
     "zh": "cmn", 
@@ -79,7 +80,7 @@ class KokoroSpeaker:
                 text,
                 voice=self.voice,
                 speed=1.0,
-                lang=self._lang(language),
+                lang=self._get_language(language),
             )
             await asyncio.to_thread(sf.write, file_path, samples, sample_rate)
             logger.info(f"Audio saved to: {file_path}")
@@ -92,4 +93,5 @@ class KokoroSpeaker:
 
     async def stop_playback(self) -> None:
         """Stop the audio playback."""
+        sd.stop()  # Kokoro owns sounddevice; stop it here, not in AudioPlayer
         self.audio_player.stop_playback()

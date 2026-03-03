@@ -8,8 +8,10 @@ Supports two push-to-talk trigger modes:
 Both paths feed the same internal queue → transcribe → SenseBuffer.
 """
 
+import os
 import queue
 import select
+import signal
 import sys
 import termios
 import threading
@@ -166,13 +168,14 @@ class AudioSense:
     # ------------------------------------------------------------------
 
     def _await_space_press(self) -> bool:
-        """Non-blocking check for SPACE; sets stop_event on ESC. Returns True if SPACE."""
+        """Non-blocking check for SPACE; handles ESC and Ctrl+C. Returns True if SPACE."""
         if select.select([sys.stdin], [], [], 0.1)[0]:
             byte = sys.stdin.buffer.read(1)[0]
             if byte == self._SPACE:
                 return True
-            if byte == self._ESC:
+            if byte == self._ESC or byte == 0x03:  # ESC or Ctrl+C
                 self._stop_event.set()
+                os.kill(os.getpid(), signal.SIGINT)
         return False
 
     def _await_space_release(self) -> None:

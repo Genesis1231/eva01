@@ -85,10 +85,12 @@ class Transcriber:
         # thread = threading.Thread(target=self.identifier.identify, args=(audioclip, self.name_queue))
         # thread.start()
         
-        transcription, language = self.model.transcribe_audio(audioclip)
+        transcription = self.model.transcribe_audio(audioclip)
         if not transcription:
             # thread.join()
             return None
+        
+        text, language = transcription
         
         # Get the speaker identification result
         # identification = self.name_queue.get()   
@@ -96,7 +98,7 @@ class Transcriber:
         
         # if the name is unknown, return content with a new line, there is a new person speaking, save it into a database
 
-        content = f"<human_reply>{transcription.strip()}</human_reply>"
-        print(f"({datetime.now().strftime('%H:%M:%S')}) User: {transcription}")
+        content = f"<human_reply>{text.strip()}</human_reply>"
+        print(f"({datetime.now().strftime('%H:%M:%S')}) User: {text}")
         
         return (content, language)

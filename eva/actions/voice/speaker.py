@@ -1,4 +1,5 @@
-"""Speaker factory: selects TTS model (edge/openai/elevenlabs/kokoro) and delegates. Exports: Speaker.
+"""
+Speaker factory: selects TTS model (edge/elevenlabs/kokoro) and delegates. 
   speak(answer, language) -> streams audio via model.eva_speak
   get_audio(text) -> writes mp3 to media folder, returns relative path
   stop_speaking() -> delegates to model.stop_playback
@@ -24,7 +25,7 @@ class Speaker:
         speak: Speak the given text using the selected speaker model.
     """
     
-    def __init__(self, speaker_model: str = "edge", language: str = "en")-> None:
+    def __init__(self, speaker_model: str = "kokoro", language: str = "en")-> None:
         self._model: str = speaker_model.upper()
         self._media_folder: str = self._get_data_path()
         self._language: str = language
@@ -37,7 +38,6 @@ class Speaker:
         return {
             "EDGE"       : self._create_edge_model,
             "ELEVENLABS" : self._create_elevenlab_model,
-            "OPENAI"     : self._create_openai_model,
             "KOKORO"     : self._create_kokoro_model,
         }
 
@@ -57,13 +57,6 @@ class Speaker:
         except Exception as e:
             raise Exception(f"Error: Failed to initialize ElevenLabs model {str(e)} ")
 
-    def _create_openai_model(self):
-        from .model_openai import OpenAISpeaker
-        
-        try:
-            return OpenAISpeaker()
-        except Exception as e:
-            raise Exception(f"Error: Failed to initialize OpenAI model {str(e)}")
 
     def _create_kokoro_model(self):
         from .model_kokoro import KokoroSpeaker

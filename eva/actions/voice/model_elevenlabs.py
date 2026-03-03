@@ -8,7 +8,6 @@ ElevenLabsSpeaker: ElevenLabs TTS model.
 from config import logger
 import os
 import asyncio
-from threading import Thread
 import secrets
 from typing import Optional
 
@@ -22,12 +21,10 @@ class ElevenLabsSpeaker:
     def __init__(self, voice: str = "TbMNBJ27fH2U0VgpSNko") -> None:
         self.model: ElevenLabs = ElevenLabs()
         self.audio_player: AudioPlayer = AudioPlayer()
-        self.audio_thread: Optional[Thread] = None
         self.voice: str = voice # voice could be configured in the future
         
     async def eva_speak(self, text: str, language: Optional[str] = None) -> None:
-        """ Speak the given text using ElevenLabs """
-        
+        """Speak the given text using ElevenLabs."""
         model_name = "eleven_flash_v2" if language == "en" else "eleven_v3"
 
         try:
@@ -36,14 +33,11 @@ class ElevenLabsSpeaker:
                 output_format="mp3_22050_32",
                 text=text,
                 voice_id=self.voice,
-                optimize_streaming_latency = 1,
+                optimize_streaming_latency=1,
             )
-
-            if self.audio_thread and self.audio_thread.is_alive():
-                self.audio_player.stop_playback()
-                self.audio_thread.join()
-                
-            self.audio_thread = await asyncio.to_thread(
+            
+            # play_generator is blocking; run in thread pool so the event loop stays free
+            await asyncio.to_thread(
                 self.audio_player.play_generator, 
                 audio_stream
             )
