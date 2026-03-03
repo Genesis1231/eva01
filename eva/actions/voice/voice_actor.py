@@ -15,7 +15,7 @@ from typing import Optional
 
 from .speaker import Speaker
 from .audio_player import AudioPlayer
-from ..buffer import ActionBuffer
+from ..action_buffer import ActionBuffer
 
 class VoiceActor:
     """

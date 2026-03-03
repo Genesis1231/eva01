@@ -8,7 +8,7 @@ from config import logger
 from typing import Dict, Any, List
 from datetime import datetime
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain.chat_models import init_chat_model 
 
 from .schema import RespondToUser
@@ -57,16 +57,20 @@ class ChatAgent:
     async def arespond(self, sense: str = "") -> Dict[str, Any]:
         """Invoke the agent and return the structured RespondToUser response."""
         
-        prompt = self.constructor.build_prompt(
+        system, human = self.constructor.build_prompt(
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M"),
             sense=sense,
         )
 
-        messages = [HumanMessage(content=prompt)]
+        messages = [SystemMessage(content=system), HumanMessage(content=human)]
 
         try:
             response = await self._llm_with_tools.ainvoke(messages)
             logger.debug(f"ChatAgent: response — \n{response.model_dump_json(indent=2)}")
+
+            #Usage count
+            usage = response.usage_metadata
+            logger.debug(f"LLM({self.model_name}) Usage - Input tokens: {usage['input_tokens']/1000:.2f}k, Output tokens: {usage['output_tokens']/1000:.2f}k, Total tokens: {usage['total_tokens']/1000:.2f}k")
 
             for tool_call in (response.tool_calls or []):
                 if tool_call["name"] == "RespondToUser":

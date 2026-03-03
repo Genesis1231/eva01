@@ -81,8 +81,7 @@ class AudioSense:
         """Stop all threads cleanly."""
         if self._process_thread is None:
             return
-
-        logger.debug("AudioSense: Stopping...")
+        
         self._stop_event.set()
 
         if self._input_thread:

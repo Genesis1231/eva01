@@ -4,10 +4,10 @@ from typing import Any, List, Dict, Type
 from functools import lru_cache
 
 class RespondToUser(BaseModel):
-    """Tool to organize thoughts and provide a verbal response to the user. You MUST call this tool."""
-    analysis: str = Field(description="My reflection and analysis on the user's input and my situation.")
-    strategy: str = Field(description="My step-by-step plan and response strategy.")
-    response: str = Field(description="My verbal response to the user.")
+    """How I think and speak. I always use this to express myself."""
+    feeling: str = Field(description="What I feel and notice right now.")
+    inner_monologue: str = Field(description="What I think about this, in my own words.")
+    response: str = Field(description="What I say out loud.")
 
 class SetupDesireOutput(BaseModel):
     """Output format for the name retrieval"""

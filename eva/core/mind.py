@@ -13,7 +13,7 @@ from eva.agent import ChatAgent
 from eva.senses.sense_buffer import SenseBuffer
 from eva.senses.audio.audio_sense import AudioSense
 from eva.senses.audio.transcriber import Transcriber
-from eva.actions.buffer import ActionBuffer
+from eva.actions.action_buffer import ActionBuffer
 from eva.actions.voice.voice_actor import VoiceActor
 from eva.actions.voice.speaker import Speaker
 

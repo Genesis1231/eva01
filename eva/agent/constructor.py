@@ -22,31 +22,30 @@ class PromptConstructor:
     
     def __init__(self):
         self.persona_prompt: str = load_prompt("persona") # default persona prompt
-        self.instruction_prompt: str = load_prompt("instructions") # default instructions prompt
+        self.instruction: str = load_prompt("instructions") # default instructions prompt
         
 
     def build_prompt(
         self,
-        timestamp : str, 
-        sense: str, 
-    ) -> str:
-        """
-        PromptBuilder class:
-    
-        """
- 
-        PROMPT_TEMPLATE = (
-             "<PERSONA>\n"
-            f"{self.persona_prompt}\n"
-             "</PERSONA>\n\n"
-             "<CONTEXT>\n"
-            f"<current_time>{timestamp}</current_time>\n"
-            f"{sense}\n"
-             "</CONTEXT>\n\n"
-             "<INSTRUCTIONS>\n"
-            f"{self.instruction_prompt}\n"
-             "</INSTRUCTIONS>"
+        timestamp: str,
+        sense: str,
+    ) -> tuple[str, str]:
+        """Build system and human messages. Returns (system, human)."""
+
+        system_prompt = (
+            f"<PERSONA>{self.persona_prompt}</PERSONA>\n\n"
+            f"<CURRENT_TIME>{timestamp}</CURRENT_TIME>\n\n"
+            f"<INSTRUCTIONS>\n"
+            f"{self.instruction}\n"
+            f"</INSTRUCTIONS>"
         )
-    
-        logger.debug(PROMPT_TEMPLATE)
-        return PROMPT_TEMPLATE
+
+        human_prompt = (
+            "<CONTEXT>\n"
+            f"{sense}\n"
+            "</CONTEXT>"
+        )
+
+        logger.debug(f"PromptConstructor: system — \n{system_prompt}")
+        logger.debug(f"PromptConstructor: human — \n{human_prompt}")
+        return system_prompt, human_prompt
