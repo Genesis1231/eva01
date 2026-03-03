@@ -75,14 +75,14 @@ class AudioSense:
             )
             self._input_thread.start()
 
-        logger.info(f"AudioSense: Started (keyboard={self._keyboard}).")
+        logger.debug(f"AudioSense: Started (keyboard={self._keyboard}).")
 
     def stop(self) -> None:
         """Stop all threads cleanly."""
         if self._process_thread is None:
             return
 
-        logger.info("AudioSense: Stopping...")
+        logger.debug("AudioSense: Stopping...")
         self._stop_event.set()
 
         if self._input_thread:
@@ -92,7 +92,7 @@ class AudioSense:
         self._process_thread.join(timeout=3)
         self._process_thread = None
 
-        logger.info("AudioSense: Stopped.")
+        logger.debug("AudioSense: Stopped.")
 
     # ------------------------------------------------------------------
     # External audio ingestion (WebSocket / gateway path)
@@ -111,7 +111,7 @@ class AudioSense:
 
     def _input_loop(self) -> None:
         """Thread: monitors SPACE key, records mic audio, queues it."""
-        print("... Press SPACE to talk to EVA ...", end="\r", flush=True)
+        print("... Press SPACE to talk to EVA ...")
 
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
@@ -140,7 +140,6 @@ class AudioSense:
             logger.error(f"AudioSense: input loop error — {e}")
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-            print("\033[K", end="", flush=True)
 
     def _process_loop(self, buffer: SenseBuffer) -> None:
         """Thread: drains audio queue, transcribes, pushes to SenseBuffer."""
@@ -157,7 +156,7 @@ class AudioSense:
                     # Strip legacy XML wrapper from Transcriber output
                     text = text.replace("<human_reply>", "").replace("</human_reply>", "").strip()
                     buffer.push("audio", text)
-                    logger.info(f"AudioSense: heard — {text[:80]}")
+                    logger.debug(f"AudioSense: heard — {text[:80]}")
                 else:
                     logger.debug("AudioSense: no speech detected")
             except Exception as e:

@@ -13,7 +13,6 @@ from eva.modules.tts.speaker import Speaker
 
 def load_classes(class_dict)-> Dict:
     """ Load the classes from the dictionary, using tqdm to show progress """
-    print("Initializing EVA...")
     instances = {}
     with tqdm(total=len(class_dict)) as pbar:
         for name, class_init in class_dict.items():

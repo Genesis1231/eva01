@@ -29,7 +29,7 @@ class Speaker:
         
         self.model = self._initialize_model()
         
-        logger.info(f"Speaker: {self._model} is ready.")
+        logger.debug(f"Speaker: {self._model} is ready.")
     
     def _get_model_factory(self) -> Dict[str, Callable]:
         return {

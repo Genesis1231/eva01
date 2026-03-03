@@ -19,7 +19,7 @@ class Identifier:
     def __init__(self):
         self._pid_list = None
         self._ids: List[Dict] = self.initialize_ids()
-        logger.info(f"Identifier: Ready. {len(self._ids)} IDs loaded.")
+        logger.debug(f"Identifier: Ready. {len(self._ids)} IDs loaded.")
 
     def initialize_ids(self) -> List[Dict]:
         self._pid_list = id_manager.get_pid_list() if id_manager else {}

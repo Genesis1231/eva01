@@ -74,7 +74,7 @@ class EdgeSpeaker:
             voice = self._voice_for(language)
             await edge_tts.Communicate(text, voice).save(file_path)
             
-            logger.info(f"Audio file saved to: {file_path}")
+            logger.debug(f"Audio file saved to: {file_path}")
             return f"audio/{filename}"
 
         except Exception as e:

@@ -88,7 +88,7 @@ class ElevenLabsSpeaker:
         try:
             await asyncio.to_thread(_generate)
             # Log the file path for debugging
-            logger.info(f"Audio file saved to: {file_path}")
+            logger.debug(f"Audio file saved to: {file_path}")
             
             return f"audio/{filename}"
         

@@ -1,4 +1,4 @@
-from .vision.camera import CameraSense
+from .vision.vision_sense import CameraSense
 from .audio.audio_sense import AudioSense
 from .sense_buffer import SenseBuffer
 

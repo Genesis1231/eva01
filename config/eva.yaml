@@ -36,7 +36,7 @@ models:
   # The vocal cords: synthesizing EVA's text responses into speech.
   # Common providers: "edge", "elevenlabs", "kokoro"
   # Recommend: "edge" for free, "elevenlabs" for quality, "kokoro" for local.
-  tts: "edge"
+  tts: "kokoro"
 
   # The subconscious processor: running quietly to summarize memory and context.
   # Common providers: "groq", "llama", "chatgpt", "claude", "deepseek-chat"

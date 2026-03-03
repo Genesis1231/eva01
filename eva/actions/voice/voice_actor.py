@@ -29,9 +29,9 @@ class VoiceActor:
         current_music_task: Tracked so music can be stopped without touching speech.
     """
 
-    def __init__(self, action_buffer: ActionBuffer):
+    def __init__(self, action_buffer: ActionBuffer, speaker: Speaker):
         self.buffer = action_buffer
-        self.speaker = Speaker()
+        self.speaker = speaker or Speaker()
         self.music_player = AudioPlayer()          # dedicated music channel
         
         # Tasks

@@ -29,7 +29,7 @@ class FWTranscriber:
             self.language = language
             model_name = "distil-medium.en" if language == "en" else "large-v3"
 
-        logger.info(f"Initializing Faster Whisper model '{model_name}' on {self.device}.")
+        logger.debug(f"Initializing Faster Whisper model '{model_name}' on {self.device}.")
         
         try:
             self.model = WhisperModel(

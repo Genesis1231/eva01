@@ -30,7 +30,7 @@ class Transcriber:
         self.model = self._initialize_model()
         self.name_queue = Queue()
         
-        logger.info(f"Transcriber: {self._model_selection} is ready.")
+        logger.debug(f"Transcriber: {self._model_selection} is ready.")
     
     def _get_model_factory(self) -> Dict[str, Callable]:
         return {

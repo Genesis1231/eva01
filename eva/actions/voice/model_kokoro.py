@@ -51,12 +51,11 @@ class KokoroSpeaker:
     async def eva_speak(self, text: str, language: Optional[str] = None) -> None:
         """Speak the given text using Kokoro TTS."""
         try:
-            phonemes, _ = self.g2p(text)
             samples, sample_rate = await asyncio.to_thread(
                 self._model.create,
                 text=text,
                 voice=self.voice,
-                lang="en-us",
+                lang=self._get_language(language),
             )
             
             await asyncio.to_thread(
@@ -100,7 +99,7 @@ class KokoroSpeaker:
                 file_path, 
                 format="mp3"
             )
-            logger.info(f"Speech saved to: {file_path}")
+            logger.debug(f"Speech saved to: {file_path}")
         
             return f"audio/{filename}"
         

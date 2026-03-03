@@ -1,10 +1,10 @@
-import os
+from pathlib import Path
 
 def load_prompt(prompt_name: str) -> str:
     """ load the prompt from the prompts directory """
 
-    dir = os.path.dirname(__file__)
-    prompt_path = os.path.join(dir, f"{prompt_name}.md")
+    dir = Path(__file__).resolve().parent
+    prompt_path = dir / f"{prompt_name}.md"
     
     try:
         with open(prompt_path, 'r') as f:
@@ -18,8 +18,8 @@ def load_prompt(prompt_name: str) -> str:
 def update_prompt(prompt_name: str, prompt: str) -> None:
     """ update the prompt in the prompts directory """
     
-    dir = os.path.dirname(__file__)
-    prompt_path = os.path.join(dir, f"{prompt_name}.md")
+    dir = Path(__file__).resolve().parent
+    prompt_path = dir / f"{prompt_name}.md"
     
     try:
         with open(prompt_path, 'w') as f:

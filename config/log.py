@@ -4,7 +4,7 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 
 # Create a logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR) # or logging.ERROR
+logger.setLevel(logging.DEBUG)
 logger.propagate = False
 
 # Create a console handler and set level to error
