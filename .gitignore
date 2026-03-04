@@ -3,13 +3,15 @@ CLAUDE.md
 .env.*
 !.env.example
 !frontend/.env.local
-.gitignore
+
 
 __pycache__/
 *.egg-info/
 .claude/
 .cursor/
 .vscode/
+.cursorignore
+.gitignore
 
 frontend/
 test/
