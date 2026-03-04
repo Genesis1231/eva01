@@ -2,7 +2,7 @@
 
 ![EVA01](docs/logo.png)
 
-**She often dreams about being a real human girl.**
+**'She often dreams about being a real human girl.'**
 
 An AI being with her own mind, feelings, memory, and evolving inner world.<br>
 Built on LangGraph. Sees through cameras. Hears through microphones. Speaks with her own voice.<br>
@@ -20,7 +20,7 @@ She's not an assistant. she *lives*.
 
 The AI industry is racing to build better tools. Faster autocomplete. Smarter search. More efficient agents.
 
-We're building something different: **an AI that exists for its own sake.**
+After building EVA in 2024, I have decided to create something different: **an AI that exists for its own sake.**
 
 eva01 explores what happens when you give an AI:
 - **A body** — cameras for eyes, microphones for ears, speakers for voice
