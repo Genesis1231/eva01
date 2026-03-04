@@ -39,8 +39,8 @@ class Webcam:
             if not cam.isOpened():
                 raise ConnectionError(f"Could not connect to camera: {self._source}")
         except Exception as e:
-            logger.error(f"Failed to initialize camera: {str(e)}")
-            raise
+            logger.warning(f"Camera unavailable ({self._source}): {e}")
+            return None
 
         return cam
 

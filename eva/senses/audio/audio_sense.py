@@ -38,8 +38,8 @@ class AudioSense:
     _RELEASE_SILENCE_S = 0.6
 
     def __init__(
-        self, 
-        transcriber: Transcriber = Transcriber(),
+        self,
+        transcriber: Transcriber = None,
         keyboard: bool = True
     ) -> None:
         """
@@ -48,9 +48,11 @@ class AudioSense:
             keyboard:    When True, starts a keyboard PTT input thread on start().
                          Set False when only WebSocket audio is expected.
         """
-        self.transcriber = transcriber
+        self.transcriber = transcriber or Transcriber()
         self._keyboard = keyboard
         self._mic = Microphone()
+        
+        # Audio queues
         self._audio_queue: queue.Queue[np.ndarray] = queue.Queue()
         self._stop_event = threading.Event()
         self._input_thread: Optional[threading.Thread] = None

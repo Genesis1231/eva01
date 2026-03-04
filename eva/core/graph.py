@@ -3,70 +3,55 @@ EVA's brain — a LangGraph StateGraph with ReAct tool loop.
 
 Graph: START → think → tool calls? → yes → tools → think
                                     → no  → END
+
+Pure workflow topology. The ChatAgent owns the LLM and prompt logic.
 """
 
-from datetime import datetime
-
-from langchain.chat_models import init_chat_model
-from langchain_core.messages import SystemMessage
+from langchain_core.messages import HumanMessage
 from langgraph.graph import MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from config import logger
-from eva.actions.action_buffer import ActionBuffer
-from eva.agent.constructor import PromptConstructor
-from eva.tools import load_tools
+from eva.agent.chatagent import ChatAgent
 
 
-def build_graph(model_name: str, action_buffer: ActionBuffer, checkpointer=None):
-    """Build and compile EVA's brain graph.
+THREAD_ID = "eva-main"
 
-    Returns a compiled StateGraph ready for ainvoke().
-    """
 
-    # Tools — auto-discovered from eva/tools/
-    tools = load_tools(action_buffer)
+class Brain:
+    """EVA's brain graph — topology only, agent owns the process."""
 
-    # LLM with tools bound
-    llm = init_chat_model(model_name, temperature=0.8).bind_tools(tools)
+    def __init__(self, agent: ChatAgent, checkpointer=None):
+        self.agent = agent
+        self._config = {"configurable": {"thread_id": THREAD_ID}}
+        self._graph = self._build(checkpointer)
 
-    # Prompt constructor (loads persona + instructions from disk once)
-    constructor = PromptConstructor()
+    def _build(self, checkpointer):
+        agent = self.agent
 
-    # -- Nodes ---------------------------------------------------------------
+        async def think(state: MessagesState):
+            response = await agent.think(state["messages"])
+            return {"messages": [response]}
 
-    async def think(state: MessagesState):
-        """Inject fresh system prompt, call LLM."""
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-        system = constructor.build_system(timestamp)
+        def route(state: MessagesState):
+            last = state["messages"][-1]
+            if hasattr(last, "tool_calls") and last.tool_calls:
+                return "tools"
+            return "__end__"
 
-        response = await llm.ainvoke([SystemMessage(content=system)] + state["messages"])
+        builder = StateGraph(MessagesState)
+        builder.add_node("think", think)
+        builder.add_node("tools", ToolNode(agent.tools))
 
-        usage = response.usage_metadata
-        if usage:
-            logger.debug(
-                f"LLM({model_name}) — "
-                f"in: {usage['input_tokens']/1000:.1f}k  "
-                f"out: {usage['output_tokens']/1000:.1f}k"
-            )
+        builder.set_entry_point("think")
+        builder.add_conditional_edges("think", route)
+        builder.add_edge("tools", "think")
 
-        return {"messages": [response]}
+        return builder.compile(checkpointer=checkpointer)
 
-    def route(state: MessagesState):
-        """ReAct routing: tool calls → tools, otherwise → END."""
-        last = state["messages"][-1]
-        if hasattr(last, "tool_calls") and last.tool_calls:
-            return "tools"
-        return "__end__"
-
-    # -- Build graph ---------------------------------------------------------
-
-    builder = StateGraph(MessagesState)
-    builder.add_node("think", think)
-    builder.add_node("tools", ToolNode(tools))
-
-    builder.set_entry_point("think")
-    builder.add_conditional_edges("think", route)
-    builder.add_edge("tools", "think")
-
-    return builder.compile(checkpointer=checkpointer)
+    async def invoke(self, sense: str):
+        """Send a sensory input through the graph."""
+        human = f"<CONTEXT>\n{sense}\n</CONTEXT>"
+        await self._graph.ainvoke(
+            {"messages": [HumanMessage(content=human)]},
+            config=self._config,
+        )

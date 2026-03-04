@@ -28,7 +28,7 @@ async def eva_initialize(state: Dict[str, Any]) -> Dict[str, Any]:
         "memory": modules["memory"],
         "toolbox": modules["toolbox"],
         "sense": await modules["client"].start(),
-        "action": [],
+        "action": [], 
         "action_results": [],
         "num_conv": 0
     }

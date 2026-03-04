@@ -43,6 +43,9 @@ class CameraSense:
 
     def start(self, buffer: SenseBuffer) -> None:
         """Start the background vision task, writing observations to buffer."""
+        if self.webcam.camera is None:
+            logger.info("CameraSense: No camera — skipping vision.")
+            return
         if self._task is not None and not self._task.done():
             logger.warning("CameraSense: Already running.")
             return
