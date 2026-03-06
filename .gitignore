@@ -33,7 +33,7 @@ planning/
 *.mp3
 *.db 
 *.bak
-*.jpg
+
 
 # OS
 .DS_Store
