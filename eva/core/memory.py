@@ -8,25 +8,37 @@ Context assembly:
     journal (recent entries) + distilled current session → system prompt
 """
 import asyncio
+from typing import cast
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from config import logger
 from eva.agent.schema import PeopleReflection
 from eva.core.journal import JournalDB
+from eva.core.people import PeopleDB
 from eva.utils.prompt import load_prompt
 
 
 class MemoryDB:
     """EVA's long-term memory — orchestration layer over JournalDB + PeopleDB."""
 
-    def __init__(self, utility_model: str = None, people_db=None):
-        self._journal = JournalDB()
+    def __init__(
+        self,
+        utility_model: str,
+        people_db: PeopleDB,
+        journal_db: JournalDB,
+    ):
+        self._journal = journal_db
         self._journal_prompt = load_prompt("journal")
         self._relationships_prompt = load_prompt("relationships")
-        self._pen = init_chat_model(utility_model) if utility_model else None
+        self._pen = init_chat_model(utility_model)
         self._people = people_db
-        logger.debug(f"MemoryDB: ready (utility_model={'in hand' if self._pen else 'missing'}).")
+        
+        logger.debug(f"MemoryDB: ready (utility_model={self._pen}).")
+
+    async def init_db(self) -> None:
+        """Initialize journal storage."""
+        await self._journal.init_db()
 
 
     # ── Distillation ─────────────────────────────────────────
@@ -108,7 +120,7 @@ class MemoryDB:
 
     # ── Context Assembly ─────────────────────────────────────
 
-    def prepare_context(self, messages: list, limit: int = 3) -> tuple[list, str]:
+    async def prepare_context(self, messages: list, limit: int = 3) -> tuple[list, str]:
         """Distill current session messages + build journal context.
 
         Returns (distilled_messages, journal_summary).
@@ -116,7 +128,7 @@ class MemoryDB:
         distilled = self.distill(messages)
 
         # Get recent journal entries, limit to 3
-        entries = self._journal.get_recent(limit)
+        entries = await self._journal.get_recent(limit)
         journal_summary = "\n\n".join(entries) if entries else ""
 
         return distilled, journal_summary
@@ -135,7 +147,7 @@ class MemoryDB:
 
     # ── Flush ────────────────────────────────────────────────
 
-    async def flush(self, messages: list, session_id: str = None) -> bool:
+    async def flush(self, messages: list, session_id: str) -> bool:
         """
         Summarize a full session into a journal entry via the utility LLM.
         Called on shutdown/recovery to save the session to the journal.
@@ -167,7 +179,7 @@ class MemoryDB:
             self._reflect_people(conversation)
         )
 
-        self._journal.add(journal, session_id)
+        await self._journal.add(journal, session_id)
         logger.debug(f"MemoryDB: journaled session ({len(journal.split())} words).")
         return True
 
@@ -179,7 +191,8 @@ class MemoryDB:
         prompt = self._journal_prompt.format(conversation=conversation)
         try:
             response = await self._pen.ainvoke(prompt)
-            return response.content.strip()
+            return self._text_content(response.content)
+
         except Exception as e:
             logger.error(f"MemoryDB: message reflection failed — {e}")
             return conversation
@@ -219,7 +232,7 @@ class MemoryDB:
 
         try:
             structured_pen = self._pen.with_structured_output(PeopleReflection)
-            reflection = await structured_pen.ainvoke(prompt)
+            reflection = cast(PeopleReflection, await structured_pen.ainvoke(prompt))
         except Exception as e:
             logger.error(f"MemoryDB: relationship extraction failed — {e}")
             return
@@ -227,4 +240,4 @@ class MemoryDB:
         # Write validated impressions to PeopleDB
         for entry in reflection.impressions:
             if entry.person_id in mentioned:
-                self._people.append_notes(entry.person_id, entry.impression)
+                await self._people.append_notes(entry.person_id, entry.impression)

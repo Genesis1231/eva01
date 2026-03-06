@@ -44,7 +44,7 @@ class ChatAgent:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
         if self.memory:
-            distilled, journal = self.memory.prepare_context(messages)
+            distilled, journal = await self.memory.prepare_context(messages)
             system = self.constructor.build_system(
                 timestamp=timestamp, 
                 memory=journal, 

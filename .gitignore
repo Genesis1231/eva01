@@ -1,7 +1,6 @@
 CLAUDE.md
 .env
 !.env.example
-!frontend/.env.local
 
 # Python
 __pycache__/
@@ -31,9 +30,9 @@ planning/
 
 *.wav
 *.mp3
-*.db 
+*.db
 *.bak
-
+*.jpg
 
 # OS
 .DS_Store

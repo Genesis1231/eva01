@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, AliasPath
 
 CONFIG_FILE = Path(__file__).with_name("eva.yaml")
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+SQLITE_DB_NAME = "eva.db"
 
 class Config(BaseModel):
     # System settings

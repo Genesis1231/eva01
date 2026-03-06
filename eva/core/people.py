@@ -1,62 +1,51 @@
-import sqlite3
-import threading
+""" 
+EVA's memory of people she's met, 
+stored in a SQLite database with an in-memory cache for quick access. 
+"""
+
 from datetime import datetime, timezone
 from typing import Dict
+
 from config import logger, DATA_DIR
+from eva.core.db import SQLiteHandler
 
 
 class PeopleDB:
     """EVA's memory of people she's met."""
 
-    def __init__(self):
-        self._conn = None
-        self._lock = threading.RLock()
-        self._cache = None
-        self.init_db()
+    def __init__(self, db: SQLiteHandler):
+        self._db = db
+        self._cache = {}
+        self._initialized = False
+
+    async def init_db(self) -> None:
+        """Initialize the database."""
+        if self._initialized:
+            return
+
+        await self._create_table()
+        self._cache = await self._load_all()
+        self._initialized = True
         logger.debug(f"PeopleDB: {len(self._cache)} people in memory.")
 
-    def _connect(self) -> sqlite3.Connection:
-        """Connect to the database."""
-        with self._lock:
-            if self._conn is None:
-                db_path = DATA_DIR / "database" / "eva.db"
-                self._conn = sqlite3.connect(db_path, check_same_thread=False)
-                self._conn.row_factory = sqlite3.Row
-            return self._conn
-
-    def close(self):
-        """Close the database connection."""
-        with self._lock:
-            if self._conn:
-                self._conn.close()
-                self._conn = None
-
-    def init_db(self) -> None:
-        """Initialize the database."""
-        (DATA_DIR / "database").mkdir(parents=True, exist_ok=True)
-        self._create_table()
-        self._cache = self._load_all()
-
-    def _create_table(self) -> None:
+    async def _create_table(self) -> None:
         """Create the people table if it doesn't exist."""
-        with self._lock:
-            with self._connect() as conn:
-                conn.execute("""
-                    CREATE TABLE IF NOT EXISTS people (
-                        id TEXT PRIMARY KEY,
-                        name TEXT NOT NULL,
-                        relationship TEXT,
-                        first_seen TIMESTAMP,
-                        last_seen TIMESTAMP,
-                        notes TEXT
-                    )
-                """)
+        await self._db.execute(
+            """
+            CREATE TABLE IF NOT EXISTS people (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                relationship TEXT,
+                first_seen TIMESTAMP,
+                last_seen TIMESTAMP,
+                notes TEXT
+            )
+            """
+        )
 
-    def _load_all(self) -> Dict[str, Dict]:
+    async def _load_all(self) -> Dict[str, Dict]:
         """Load all people from the database."""
-        with self._lock:
-            with self._connect() as conn:
-                rows = conn.execute("SELECT * FROM people").fetchall()
+        rows = await self._db.fetchall("SELECT * FROM people")
         return {row["id"]: dict(row) for row in rows}
 
     def get(self, person_id: str) -> Dict | None:
@@ -72,7 +61,7 @@ class PeopleDB:
         """Get all people from the database."""
         return self._cache
 
-    def add(self, person_id: str, name: str, relationship: str = None) -> bool:
+    async def add(self, person_id: str, name: str, relationship: str | None = None) -> bool:
         """Register a new person to the database."""
         if person_id in self._cache:
             logger.warning(f"PeopleDB: {person_id} already exists.")
@@ -83,35 +72,36 @@ class PeopleDB:
         face_dir.mkdir(parents=True, exist_ok=True)
 
         try:
-            with self._lock:
-                with self._connect() as conn:
-                    conn.execute(
-                        "INSERT INTO people (id, name, relationship, first_seen, last_seen) VALUES (?, ?, ?, ?, ?)",
-                        (person_id, name, relationship, now, now),
-                    )
+            await self._db.execute(
+                "INSERT INTO people (id, name, relationship, first_seen, last_seen) VALUES (?, ?, ?, ?, ?)",
+                (person_id, name, relationship, now, now),
+            )
             self._cache[person_id] = {
                 "id": person_id, "name": name, "relationship": relationship,
                 "first_seen": now, "last_seen": now, "notes": None,
             }
             logger.info(f"PeopleDB: Added {name} ({person_id}).")
             return True
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"PeopleDB: Failed to add {person_id} — {e}")
             return False
 
-    def touch(self, person_id: str) -> None:
+    async def touch(self, person_id: str) -> None:
         """Update last_seen to now."""
         now = datetime.now(timezone.utc).isoformat()
         try:
-            with self._lock:
-                with self._connect() as conn:
-                    conn.execute("UPDATE people SET last_seen = ? WHERE id = ?", (now, person_id))
+            await self._db.execute(
+                "UPDATE people SET last_seen = ? WHERE id = ?",
+                (now, person_id),
+            )
             if person_id in self._cache:
                 self._cache[person_id]["last_seen"] = now
-        except sqlite3.Error as e:
+                logger.debug(f"PeopleDB: Touched {person_id}.")
+                
+        except Exception as e:
             logger.error(f"PeopleDB: Failed to touch {person_id} — {e}")
 
-    def append_notes(self, person_id: str, impression: str) -> None:
+    async def append_notes(self, person_id: str, impression: str) -> None:
         """EVA adds a new impression, timestamped for future consolidation."""
         if person_id not in self._cache:
             return
@@ -122,10 +112,11 @@ class PeopleDB:
         updated = f"{existing}\n\n{entry}".strip() if existing else entry
 
         try:
-            with self._lock:
-                with self._connect() as conn:
-                    conn.execute("UPDATE people SET notes = ? WHERE id = ?", (updated, person_id))
+            await self._db.execute(
+                "UPDATE people SET notes = ? WHERE id = ?",
+                (updated, person_id)
+            )
             self._cache[person_id]["notes"] = updated
             logger.debug(f"PeopleDB: noted impression for {person_id}.")
-        except sqlite3.Error as e:
+        except Exception as e:
             logger.error(f"PeopleDB: Failed to update notes for {person_id} — {e}")

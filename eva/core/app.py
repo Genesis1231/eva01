@@ -21,9 +21,15 @@ from eva.senses.vision.describer import Describer
 from eva.senses.vision.identifier import Identifier
 from eva.actions.voice.speaker import Speaker
 from eva.core.people import PeopleDB
+from eva.core.journal import JournalDB
+from eva.core.db import SQLiteHandler
 
 
-async def weave(config: Config, checkpointer: AsyncSqliteSaver | None = None):
+async def weave(
+    config: Config, 
+    db: SQLiteHandler, 
+    checkpointer: AsyncSqliteSaver | None = None
+):
     """Wire up senses, brain, and actions. Return shared buffers and components."""
 
     logger.debug("Assembling EVA's core components...")
@@ -35,8 +41,11 @@ async def weave(config: Config, checkpointer: AsyncSqliteSaver | None = None):
     sense_buffer.attach_loop(loop)
 
     # People & Memory
-    people_db = PeopleDB()
-    memory_db = MemoryDB(config.UTILITY_MODEL, people_db=people_db)
+    people_db = PeopleDB(db)
+    journal_db = JournalDB(db)    
+    memory_db = MemoryDB(config.UTILITY_MODEL, people_db, journal_db)
+
+    asyncio.gather(people_db.init_db(), memory_db.init_db(), journal_db.init_db())  # parallel init
 
     # initialize vision sense
     describer = Describer(config.VISION_MODEL)
@@ -86,8 +95,10 @@ async def wake() -> None:
 
     logger.debug("EVA is waking up...")
 
+    db = SQLiteHandler()
+
     async with AsyncSqliteSaver.from_conn_string(str(graph_db)) as checkpointer:
-        sense_buffer, action_buffer, audio_sense, camera_sense, voice_actor, brain, memory_db = await weave(eva_configuration, checkpointer)
+        sense_buffer, action_buffer, audio_sense, camera_sense, voice_actor, brain, memory_db = await weave(eva_configuration, db, checkpointer)
 
         logger.debug(f"EVA: session {brain.thread_id} — ready.")
         await action_buffer.put("speak", "I am ready!.")
@@ -110,6 +121,7 @@ async def wake() -> None:
             if camera_sense:
                 await camera_sense.stop()
             await voice_actor.stop()
+            await db.close_all()
             logger.debug("EVA is falling asleep... Bye!")
 
 

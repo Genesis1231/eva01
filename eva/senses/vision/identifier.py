@@ -56,13 +56,13 @@ class Identifier:
 
         results = []
         for df in dfs:
-            if df.empty:
+            if df.empty: #type: ignore
                 # Face detected but no match — a stranger
                 results.append({"id": None, "name": "someone I don't recognize", "distance": None})
                 continue
 
             # Get the best match (first row)
-            match = df.iloc[0]
+            match = df.iloc[0] # type: ignore
             identity_path = Path(match["identity"])
 
             # The person_id is the parent directory name
@@ -73,8 +73,6 @@ class Identifier:
             if not name:
                 results.append({"id": None, "name": "someone I don't recognize", "distance": None})
                 continue
-
-            self.people.touch(person_id)
 
             results.append({
                 "id": person_id,

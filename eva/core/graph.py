@@ -90,6 +90,12 @@ class Brain:
         if entry.metadata and "faces" in entry.metadata:
             face_ids = entry.metadata["faces"]
 
+        # Core orchestration owns state updates for seen people.
+        people_db = getattr(self.agent.constructor, "people_db", None)
+        if people_db and face_ids:
+            for face_id in set(face_ids):
+                await people_db.touch(face_id)
+
         await self._graph.ainvoke(
             {
                 "messages": [HumanMessage(content=content)], 
