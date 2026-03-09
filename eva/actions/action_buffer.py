@@ -86,7 +86,7 @@ class ActionBuffer:
             metadata=metadata,
         )
         await self._queue.put(event)
-        logger.debug(f"ActionBuffer: put <{action_type}> — {str(content)} words.")
+        logger.debug(f"ActionBuffer: put <{action_type}> — {str(content)}")
 
     # ------------------------------------------------------------------
     # Dispatch loop (async — runs as a concurrent task in the spine)
