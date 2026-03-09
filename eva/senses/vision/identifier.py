@@ -107,8 +107,8 @@ class Identifier:
                 # Keep id None for likely matches to avoid contaminating memory updates.
                 results.append(
                     {
-                        "id": None,
-                        "name": f"looks like {name}",
+                        "id": person_id,
+                        "name": f"someone looks like {name}",
                     }
                 )
                 continue

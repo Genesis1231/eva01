@@ -7,7 +7,7 @@ from config import logger
 @tool
 async def stay_quiet(reason: str) -> str:
     """Choose not to speak. I use this when I want to be silent."""
-    return f"[I stayed quiet: {reason}]"
+    return f"[I stayed quiet because {reason}]"
 
 
 if stay_quiet.metadata is None:

@@ -147,16 +147,16 @@ class AudioSense:
                         logger.error("AudioSense: mic recording failed to start")
                         continue
 
-                    print("   ...Recording... RELEASE to send ...\r", flush=True)
+                    print("   ...Recording... RELEASE to send ...\r", end="", flush=True)
                     self._await_space_release()
 
                     audio = self._mic.stop_recording()
-                    print("   ... PRESS SPACE to talk to EVA ...\r", flush=True)
+                    print("   ... PRESS SPACE to talk to EVA ...\r", end="", flush=True)
 
                     if audio is not None:
                         self._audio_queue.put(audio)
                     else:
-                        print("   [DBG] audio was None — too short or empty\r")
+                        logger.warning("AudioSense: audio was None — too short or empty")
 
         except Exception as e:
             logger.error(f"AudioSense: input loop error — {e}")
@@ -175,7 +175,7 @@ class AudioSense:
                 result = self.transcriber.transcribe(audio)
                 if result:
                     text, _ = result
-                    buffer.push("audio", f"{text}")
+                    buffer.push("audio", f"I heard: {text}")
                 else:
                     logger.debug("AudioSense: no speech detected")
             except Exception as e:

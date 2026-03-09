@@ -38,6 +38,6 @@ def make_watch_tool(action_buffer: ActionBuffer):
             video_id,
             {"title": title, "channel": channel},
         )
-        return f"Queued '{title}' by {channel}."
+        return f"I am trying to watch '{title}' by {channel}."
 
     return watch
