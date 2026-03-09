@@ -16,9 +16,7 @@ class Transcriber:
     
     def __init__(self, model_name: str = "faster-whisper"):
         self._model_selection: str = model_name.upper()
-        self.model = self._initialize_model()
-        
-        logger.debug(f"Transcriber: {self._model_selection} is ready.")
+        self.model = None
     
     def _get_model_factory(self) -> Dict[str, Callable]:
         return {
@@ -44,22 +42,37 @@ class Transcriber:
             logger.error(f"Error: failed to load Whisper Model: {e}")
             raise 
         
-    def _initialize_model(self):
-        """ Initialize the selected transcription model """
-        
+    def init_model(self):
+        """Initialize the selected transcription model once."""
+        if self.model is not None:
+            return self.model
+
         model_factory = self._get_model_factory()
         create_model = model_factory.get(self._model_selection)
-        
+
         if create_model is None:
             raise ValueError(f"Error: Model {self._model_selection} is not supported")
-        
-        return create_model()
-    
+
+        self.model = create_model()
+        if hasattr(self.model, "init_model"):
+            self.model.init_model()
+        logger.debug(f"Transcriber: {self._model_selection} is ready.")
+        return self.model
+
 
     def transcribe(self, audioclip) -> Optional[Tuple[str, str]]:
         """ Transcribe the given audio clip. """
+        
+        if self.model is None:
+            logger.error("Transcriber: Model is not initialized. Call init_model() first.")
+            return None
+        
+        try:
+            transcription = self.model.transcribe_audio(audioclip)
+        except Exception as e:
+            logger.error(f"Transcriber: Error during transcription - {e}")
+            return None
 
-        transcription = self.model.transcribe_audio(audioclip)
         if not transcription:
             return None
 
@@ -72,6 +85,6 @@ class Transcriber:
 
     def close(self) -> None:
         """Release the underlying model resources."""
-        if hasattr(self.model, 'close'):
+        if self.model is not None and hasattr(self.model, 'close'):
             self.model.close()
             logger.debug("Transcriber: Model released.")

@@ -11,9 +11,9 @@ class Config(BaseModel):
     DEVICE: str = Field(validation_alias=AliasPath("system", "device"))
     LANGUAGE: str = Field(validation_alias=AliasPath("system", "language"))
     BASE_URL: str = Field(validation_alias=AliasPath("system", "base_url"))
-    CAMERA_URL: int | str = Field(
-        default=0, 
-        validation_alias=AliasPath("system", "camera_url")
+    CAMERA: bool | int | str = Field(
+        default=0,
+        validation_alias=AliasPath("system", "camera")
     )
 
     # Model settings

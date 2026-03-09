@@ -67,17 +67,29 @@ class JournalDB:
             hour=0, minute=0, second=0, microsecond=0
         ).isoformat()
 
+        def _format(row):
+            try:
+                dt = datetime.fromisoformat(row["created_at"])
+                # Format: "March 6, at 10AM"
+                ts = dt.strftime("%B %d, at %I%p")
+                # Remove leading zero from hour, " at 02" -> " at 2"
+                ts = ts.replace(" at 0", " at ")
+
+                return f"[{ts}] {row['content']}"
+            except Exception:
+                return row["content"]
+
         rows = list(await self._db.fetchall(
-            "SELECT content FROM journal WHERE created_at >= ? ORDER BY created_at DESC LIMIT ?",
+            "SELECT content, created_at FROM journal WHERE created_at >= ? ORDER BY created_at DESC LIMIT ?",
             (today_start, limit),
         ))
 
         if rows:
-            return [r["content"] for r in reversed(rows)]
+            return [_format(r) for r in reversed(rows)]
 
         # Nothing today — grab last session's entries
         rows = list(await self._db.fetchall(
-            "SELECT content FROM journal ORDER BY created_at DESC LIMIT ?",
+            "SELECT content, created_at FROM journal ORDER BY created_at DESC LIMIT ?",
             (limit,),
         ))
-        return [r["content"] for r in reversed(rows)]
+        return [_format(r) for r in reversed(rows)]

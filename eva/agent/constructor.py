@@ -4,7 +4,6 @@ PromptConstructor:
     Assembles various components into structured prompts by combining:
     - Persona and instruction templates loaded from files
     - Conversation history
-    - observations and inputs
 """
 
 from typing import List, Set

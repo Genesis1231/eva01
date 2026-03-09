@@ -6,22 +6,26 @@ Three concurrent components sharing two buffers:
 """
 
 import asyncio
-from datetime import datetime
 from dotenv import load_dotenv
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-
 from config import logger, eva_configuration, DATA_DIR, Config
-from eva.core.graph import Brain
-from eva.core.memory import MemoryDB
-from eva.senses import SenseBuffer, AudioSense, CameraSense
+
+from .graph import Brain
+from .memory import MemoryDB
+from .people import PeopleDB
+from .journal import JournalDB
+from .db import SQLiteHandler
+from eva.senses import (
+    SenseBuffer, 
+    AudioSense, 
+    CameraSense,
+    Transcriber,
+    SpeakerIdentifier,
+    Describer,
+    FaceIdentifier
+)
 from eva.actions import ActionBuffer, VoiceActor, Screen, MotorSystem
-from eva.senses.audio.transcriber import Transcriber
-from eva.senses.vision.describer import Describer
-from eva.senses.vision.identifier import Identifier
 from eva.actions.voice.speaker import Speaker
-from eva.core.people import PeopleDB
-from eva.core.journal import JournalDB
-from eva.core.db import SQLiteHandler
 
 
 async def assemble(
@@ -42,37 +46,59 @@ async def assemble(
     # People & Memory
     people_db = PeopleDB(db)
     journal_db = JournalDB(db)
-    
     await asyncio.gather(
         people_db.init_db(),
         journal_db.init_db(),
     )
     memory_db = MemoryDB(config.UTILITY_MODEL, people_db, journal_db)
     
-    # initialize vision sense
-    describer = Describer(config.VISION_MODEL)
-    identifier = Identifier(people_db)
-    camera_sense = CameraSense(describer, identifier=identifier, source=config.CAMERA_URL)
-    if camera_sense.is_available:
-        camera_sense.start(sense_buffer)
+    # Initialize vision sense
+    camera_sense = None
+    face_identifier = None
+    if config.CAMERA is not False:
+        describer = Describer(config.VISION_MODEL)
+        face_identifier = FaceIdentifier(people_db)
+        camera_sense = CameraSense(
+            describer=describer, 
+            identifier=face_identifier, 
+            source=config.CAMERA
+        )
 
-    # Actions — register handlers on the shared buffer
+    # Audio components
     speaker = Speaker(config.TTS_MODEL, config.LANGUAGE)
+    transcriber = Transcriber(config.STT_MODEL)
+    speaker_identifier = SpeakerIdentifier(people_db)
+
+    # Initialize heavy models concurrently to reduce startup latency.
+    init_tasks = [
+        asyncio.to_thread(speaker.init_model),
+        asyncio.to_thread(transcriber.init_model),
+        asyncio.to_thread(speaker_identifier.init_model),
+    ]
+    if face_identifier is not None:
+        init_tasks.append(asyncio.to_thread(face_identifier.init_model))
+    await asyncio.gather(*init_tasks)
+    
+    # Actions — register handlers on the shared buffer
     voice_actor = VoiceActor(speaker)
     screen = Screen()
     motor_system = MotorSystem(
         action_buffer, 
         actions=[voice_actor, screen]
     )
-
+ 
     # initialize transcriber and audio sense
-    transcriber = Transcriber(config.STT_MODEL)
+
     audio_sense = AudioSense(
         transcriber,
+        speaker_identifier=speaker_identifier,
         on_interrupt=lambda: voice_actor.speaker.stop_speaking(),
         is_speaking=lambda: voice_actor.is_speaking,
     )
     audio_sense.start(sense_buffer)
+
+    if camera_sense is not None and camera_sense.is_available:
+        camera_sense.start(sense_buffer)
 
     # Brain — owns tools + workflow, Cortex owns LLM + prompt
     brain = Brain(
@@ -126,7 +152,7 @@ async def wake() -> None:
             await brain.shutdown()  
 
             audio_sense.stop()
-            if camera_sense:
+            if camera_sense is not None:
                 await camera_sense.stop()
                 
             await motor_system.shutdown()

@@ -26,9 +26,12 @@ system:
   # Base URL for locally hosted inference engines (e.g., Ollama).
   base_url: "http://localhost:11434"
 
-  # Remote network address for the camera stream. 
-  # Default:  (local Webcam)
-  camera_url: "http://127.0.0.1:5000/video"
+  # Camera source for EVA's vision.
+  # Options:
+  #   off            : disable camera entirely
+  #   0              : local webcam (device index)
+  #   "http://..."   : network stream URL
+  camera: off #"http://127.0.0.1:5000/video"
 
 models:
   # The core reasoning engine orchestrating EVA's personality and logic.

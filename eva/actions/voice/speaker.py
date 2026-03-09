@@ -23,10 +23,7 @@ class Speaker:
     def __init__(self, speaker_model: str = "kokoro", language: str = "en")-> None:
         self._model_name: str = speaker_model.upper()
         self._language: str = language
-        
-        self.model = self._initialize_model()
-        
-        logger.debug(f"Speaker: {self._model_name} is ready.")
+        self.model = None
     
     def _get_model_factory(self) -> Dict[str, Callable]:
         return {
@@ -60,20 +57,35 @@ class Speaker:
         except Exception as e:
             raise Exception(f"Error: Failed to initialize Kokoro model {str(e)}")
     
-    def _initialize_model(self):
+    def init_model(self):
+        """Initialize the selected TTS model once (safe to call multiple times)."""
+        if self.model is not None:
+            return self.model
+
         model_factory = self._get_model_factory()
         model = model_factory.get(self._model_name)
         if model is None:
             raise ValueError(f"Error: Model {self._model_name} is not supported.")
-        
-        return model()
+
+        self.model = model()
+        logger.debug(f"Speaker: {self._model_name} is ready.")
+        return self.model
+
+
 
     def stop_speaking(self) -> None:
         """ Stop the speaker model. Thread-safe. """
+        if self.model is None or not hasattr(self.model, 'stop_playback'):
+            return
+
         self.model.stop_playback()
         
     def speak(self, answer: str, language: Optional[str] = "en"):
         """ Speak the given text. Blocking — run via to_thread. """
+
+        if self.model is None or not hasattr(self.model, 'eva_speak'):
+            return
+        
         try:
             print(f"\n({datetime.now().strftime('%H:%M:%S')}) EVA: {answer}")
             self.model.eva_speak(answer, language)
@@ -83,10 +95,13 @@ class Speaker:
         
     async def get_audio(self, text: str) -> str:
         """ Generate audio from text and save it to the media folder """
+        if self.model is None or not hasattr(self.model, 'generate_audio'):
+            return ""
+        
         return await self.model.generate_audio(text, self._language, DATA_DIR / 'media')
 
     def close(self) -> None:
         """Release the underlying TTS model resources."""
-        if hasattr(self.model, 'close'):
+        if self.model is not None and hasattr(self.model, 'close'):
             self.model.close()
             logger.debug(f"Speaker: {self._model_name} Model released.")

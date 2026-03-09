@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 
 from eva.senses.vision.describer import Describer
-from eva.senses.vision.identifier import Identifier
+from eva.senses.vision.face_identifier import FaceIdentifier
 from eva.senses.vision.webcam import Webcam
 from eva.senses.sense_buffer import SenseBuffer
 
@@ -26,7 +26,7 @@ class CameraSense:
     def __init__(
         self,
         describer: Describer,
-        identifier: Identifier | None = None,
+        identifier: FaceIdentifier | None = None,
         source: int | str = 0,
     ):
         """

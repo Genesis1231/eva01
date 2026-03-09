@@ -17,12 +17,14 @@ import termios
 import threading
 import time
 import tty
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Callable
 
 import numpy as np
 
 from config import logger
 from .mic import Microphone
+from .speaker_identifier import SpeakerIdentifier
 from .transcriber import Transcriber
 from ..sense_buffer import SenseBuffer
 
@@ -41,18 +43,19 @@ class AudioSense:
     def __init__(
         self,
         transcriber: Transcriber,
+        speaker_identifier: Optional[SpeakerIdentifier] = None,
         on_interrupt: Optional[Callable[[], None]] = None,
         is_speaking: Optional[Callable[[], bool]] = None,
     ) -> None:
         """
         Args:
             transcriber: Transcriber instance (model backend already loaded).
-            keyboard:    When True, starts a keyboard PTT input thread on start().
-                         Set False when only WebSocket audio is expected.
+            speaker_identifier: Optional SpeakerIdentifier for voice recognition.
             on_interrupt: Optional sync callback to stop current speech.
             is_speaking:  Optional callable returning True if EVA is speaking.
         """
         self.transcriber = transcriber or Transcriber()
+        self._speaker_id = speaker_identifier
         self._on_interrupt = on_interrupt
         self._is_speaking = is_speaking
         self._mic = Microphone()
@@ -62,6 +65,7 @@ class AudioSense:
         self._stop_event = threading.Event()
         self._input_thread: Optional[threading.Thread] = None
         self._process_thread: Optional[threading.Thread] = None
+        self._executor = ThreadPoolExecutor(max_workers=2)
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -92,7 +96,7 @@ class AudioSense:
         """Stop all threads cleanly."""
         if self._process_thread is None:
             return
-        
+
         self._stop_event.set()
 
         if self._input_thread:
@@ -103,6 +107,9 @@ class AudioSense:
         self._process_thread = None
 
         self.transcriber.close()
+        if self._speaker_id:
+            self._speaker_id.close()
+        self._executor.shutdown(wait=False)
         logger.debug("AudioSense: Stopped.")
 
     # ------------------------------------------------------------------
@@ -164,7 +171,7 @@ class AudioSense:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
     def _process_loop(self, buffer: SenseBuffer) -> None:
-        """Thread: drains audio queue, transcribes, pushes to SenseBuffer."""
+        """Thread: drains audio queue, transcribes + identifies speaker in parallel."""
         while not self._stop_event.is_set():
             try:
                 audio = self._audio_queue.get(timeout=0.5)
@@ -172,10 +179,31 @@ class AudioSense:
                 continue
 
             try:
-                result = self.transcriber.transcribe(audio)
+                # Run speaker ID + transcription in parallel
+                speaker_future = (
+                    self._executor.submit(self._speaker_id.identify, audio)
+                    if self._speaker_id else None
+                )
+                transcription_future = self._executor.submit(
+                    self.transcriber.transcribe, audio
+                )
+
+                speaker = speaker_future.result() if speaker_future else None
+                result = transcription_future.result()
+
                 if result:
                     text, _ = result
-                    buffer.push("audio", f"I heard: {text}")
+                    if speaker and speaker.get("name"):
+                        content = f"{speaker['name']} said: {text}"
+                    else:
+                        content = f"I heard: {text}"
+
+                    metadata = (
+                        {"speaker_id": speaker["id"]}
+                        if speaker and speaker.get("id")
+                        else None
+                    )
+                    buffer.push("audio", content, metadata=metadata)
                 else:
                     logger.debug("AudioSense: no speech detected")
             except Exception as e:

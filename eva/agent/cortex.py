@@ -13,8 +13,6 @@ from langchain_core.messages import (
     SystemMessage,
     AIMessage,
     BaseMessage,
-    HumanMessage,
-    ToolMessage,
 )
 
 
@@ -55,7 +53,7 @@ class Cortex:
         
         # if sense is audio text, add to messages as HumanMessage; 
         # if it's text, add to system prompt as OBSERVATION
-        timestamp = datetime.now().strftime("%A, %B %d, %Y at %I:%M %p")
+        timestamp = datetime.now().strftime("%A, %B %d, %Y at %I%p")
         system = self.constructor.build_system(
             timestamp=timestamp,
             memory=journal,

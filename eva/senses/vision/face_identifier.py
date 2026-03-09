@@ -8,31 +8,36 @@ from config import logger, DATA_DIR
 from eva.core.people import PeopleDB
 
 
-class Identifier:
+class FaceIdentifier:
     """EVA's facial recognition — matches faces to people she knows."""
 
     _MODEL_NAME = "Facenet512"
     _DETECTOR_BACKEND = "retinaface"
-    _CERTAIN_DISTANCE_THRESHOLD = 0.30  # Below this, we are quite confident in the match.
+    _CERTAIN_DISTANCE_THRESHOLD = 0.20  # Below this, we are quite confident in the match.
     _LIKELY_DISTANCE_THRESHOLD = 0.50 # Below this, we think it's likely but not certain.
 
     def __init__(self, people_db: PeopleDB):
-        # Snapshot the only data Identifier needs, then avoid PeopleDB at runtime.
+        # Snapshot the only data FaceIdentifier needs, then avoid PeopleDB at runtime.
         self._people_lookup: Dict[str, str] = people_db.get_id_name_map()
         self._db_path = DATA_DIR / "faces"
-        self._init_model()
+        self._initialized = False
 
-    def _init_model(self) -> None:
+    def init_model(self) -> None:
         """Initialize the recognition model."""
+        if self._initialized:
+            return
+
         self._db_path.mkdir(parents=True, exist_ok=True)
         try:
             # Pre-load the model to avoid delay on first use
             DeepFace.build_model(model_name=self._MODEL_NAME)
             logger.debug(
-                f"Identifier: Loaded {self._MODEL_NAME} with {len(self._people_lookup)} known people."
+                f"FaceIdentifier: Loaded {self._MODEL_NAME} with {len(self._people_lookup)} known people."
             )
         except Exception as e:
-            logger.warning(f"Identifier: Failed to load identification model — {e}")
+            logger.warning(f"FaceIdentifier: Failed to load identification model — {e}")
+        finally:
+            self._initialized = True
 
     def identify(self, frame: np.ndarray) -> List[Dict]:
         """Identify faces in a frame.
@@ -40,12 +45,14 @@ class Identifier:
         Returns:
             List of dicts with keys: id, name.
         """
+        if not self._initialized:
+            self.init_model()
         
         # Quick check if we have any faces to match against
         # This is faster than iterating through the database
-        logger.debug("Identifier: Starting identification process.")
+        logger.debug("FaceIdentifier: Starting identification process.")
         if not any(self._db_path.iterdir()):
-            logger.warning("Identifier: No faces in database to match.")
+            logger.warning("FaceIdentifier: No faces in database to match.")
             return []
 
         try:
@@ -58,7 +65,7 @@ class Identifier:
                 silent=True,
             )
         except Exception as e:
-            logger.error(f"Identifier: Recognition error — {e}")
+            logger.error(f"FaceIdentifier: Recognition error — {e}")
             return []
 
         results = []
@@ -92,7 +99,7 @@ class Identifier:
                 continue
 
             distance = float(match.get("distance", 1.0)) 
-            logger.debug(f"Identifier: Identification results — {name} (id: {person_id}), distance: {distance:.4f}")
+            logger.debug(f"FaceIdentifier: Found — {name} (id: {person_id}), distance: {distance:.4f}")
             
             if distance <= self._CERTAIN_DISTANCE_THRESHOLD:
                 results.append(
@@ -136,4 +143,4 @@ class Identifier:
         except Exception:
             pass
 
-        logger.debug(f"Identifier: Model {self._MODEL_NAME} released.")
+        logger.debug(f"FaceIdentifier: Model {self._MODEL_NAME} released.")
