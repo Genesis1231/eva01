@@ -1,0 +1,26 @@
+"""EVA's show tool — opens a URL on screen via the browser."""
+
+from langchain_core.tools import tool
+from torch.cuda import device
+from eva.actions.action_buffer import ActionBuffer
+
+
+def make_show_tool(action_buffer: ActionBuffer):
+    """Create a show tool bound to the given ActionBuffer."""
+
+    @tool
+    async def show(device: str = "browser", url: str = "") -> str:
+        """
+        I use this to show something with my device. 
+        select 'browser' when I want someone to see a webpage, video, or anything with a URL.
+        I am pretty careful with the URL I provide, since it will be opened directly.
+        """
+        
+        if device == "browser":
+            await action_buffer.put("show", url)
+            return f'I am opening the browser to show: {url}'        
+       
+        return f"I don't know how to show things on '{device}', yet."
+        
+    return show
+    

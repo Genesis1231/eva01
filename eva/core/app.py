@@ -24,7 +24,7 @@ from eva.senses import (
     Describer,
     FaceIdentifier
 )
-from eva.actions import ActionBuffer, VoiceActor, Screen, MotorSystem
+from eva.actions import ActionBuffer, VoiceActor, Browser, MotorSystem
 from eva.actions.voice.speaker import Speaker
 
 
@@ -81,10 +81,10 @@ async def assemble(
     
     # Actions — register handlers on the shared buffer
     voice_actor = VoiceActor(speaker)
-    screen = Screen()
+    browser = Browser()
     motor_system = MotorSystem(
         action_buffer, 
-        actions=[voice_actor, screen]
+        actions=[voice_actor, browser]
     )
  
     # initialize transcriber and audio sense
