@@ -4,6 +4,7 @@ import re
 from config import logger
 from langchain_core.tools import tool
 from langchain_perplexity import ChatPerplexity
+from eva.tools import ToolError
 
 _llm_perplexity: ChatPerplexity | None = None
 
@@ -21,4 +22,4 @@ async def web_search(query: str) -> str:
         return re.sub(r"\[\d+\]", "", str(response.content))
     except Exception as e:
         logger.error(f"web search error: {e}")
-        raise e
+        raise ToolError(str(e), tool_name="web search") from e

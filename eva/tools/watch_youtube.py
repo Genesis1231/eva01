@@ -5,6 +5,7 @@ from typing import Dict, List, Any
 import yt_dlp
 from langchain_core.tools import tool
 from eva.actions.action_buffer import ActionBuffer
+from eva.tools import ToolError
 
 
 _YDL_OPTS: Any = {"quiet": True, "extract_flat": True, "no_warnings": True}
@@ -23,7 +24,10 @@ def make_watch_tool(action_buffer: ActionBuffer):
     @tool(name_or_callable="watch_youtube")
     async def watch(query: str) -> str:
         """Search YouTube and watch a video. Use short keyword queries (2-4 words)."""
-        videos = await asyncio.to_thread(_search, query)
+        try:
+            videos = await asyncio.to_thread(_search, query)
+        except Exception as e:
+            raise ToolError(str(e), tool_name="youtube") from e
 
         if not videos:
             return f"I didn't find any videos for '{query}'."

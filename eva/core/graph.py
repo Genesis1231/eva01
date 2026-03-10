@@ -21,11 +21,11 @@ from langchain_core.messages import (
 
 from config import logger
 from eva.actions.action_buffer import ActionBuffer
-from eva.agent.cortex import Cortex
+from eva.agent.llm import Cortex
 from eva.core.memory import MemoryDB
 from eva.core.people import PeopleDB
 from eva.senses.sense_buffer import SenseEntry
-from eva.tools import load_tools
+from eva.tools import load_tools, handle_tool_error
 
 
 class EvaState(TypedDict):
@@ -104,7 +104,7 @@ class Brain:
         builder.add_node("think", self._think)
         builder.add_node("tools", ToolNode(
             self.tools,
-            handle_tool_errors=lambda e: f"I couldn't do that — {e}",
+            handle_tool_errors=handle_tool_error,
         ))
 
         builder.set_entry_point("think")
