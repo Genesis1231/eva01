@@ -42,7 +42,7 @@ class Heart:
             if self._is_idle():
                 prompt = await self._pulse()
                 self.sense_buffer.push(type="thought", content=prompt)
-                logger.debug("Heart: pulse sent")
+                logger.debug("Heart: a pulse sent to the brain...")
 
     def _is_idle(self) -> bool:
         if self._is_busy():

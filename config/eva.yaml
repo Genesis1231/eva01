@@ -57,5 +57,5 @@ models:
 
   # The subconscious processor: running quietly to run small tasks.
   # Common providers: "google", "llama", "chatgpt", "claude", "deepseek-chat"
-  utility: "openai:gpt-5-mini"
+  utility: "openai:gpt-4o-mini"
 

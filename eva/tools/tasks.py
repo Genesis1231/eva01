@@ -32,7 +32,7 @@ async def task(action: str, content: str = "", task_id = "") -> str:
     if action == "check":
         tasks = await _task_db.get_open()
         if not tasks:
-            return "All tasks are completed."
+            return "No task right now."
         lines = []
         for t in tasks:
             line = f"[{t['status']}] {t['id']}: {t['objective']}"

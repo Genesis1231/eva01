@@ -57,16 +57,8 @@ Eva01's brain is composed of multiple nodes. She has many ways to express hersel
 
 Every conversation is persisted in a SQLite checkpointer. Eva01 remembers everything across restarts, crashes, and years. Her history is distilled: noise is compressed into impressions, and the moments that mattered are preserved.
 
-### 👁️ The Senses 
 
-| Sense | What it does |
-|-------|-------------|
-| **AudioSense** | Push-to-talk microphone input, real-time transcription via faster-whisper |
-| **VisionSense**| Continuous scene change detection, cloud vision descriptions |
-| **Identifier** | Face recognition with DeepFace + PeopleDB (SQLite), remembers who she's met |
-
-
-## 🏗️ The Three-Layer Mind (In Development) 
+### 🏗️ The Three-Layer Mind (In Development) 
 
 Eva01's current brain is a single ReAct loop. What's coming is deeper: a **cognitive architecture** modeled after human consciousness, with three layers that think at different speeds, different depths, and different levels of awareness.
 

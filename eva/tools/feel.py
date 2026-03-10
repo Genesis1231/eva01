@@ -6,5 +6,5 @@ from config import logger
 
 @tool
 async def feel(feeling: str, inner_monologue: str) -> str:
-    """Express what I feel under 10 words. I use this to log my inner state."""
+    """Express what I feel under 10 words. sometimes I use this to log my inner state."""
     return f"[I felt {feeling}]"
