@@ -15,15 +15,15 @@ def init(task_db: TaskDB):
 @tool
 async def task(
     action: Literal['create', 'check', 'update', 'done'], 
-    content: str, 
-    task_id: str
+    content: str = "", 
+    task_id: str = ""
 ) -> str:
     """
     I use this to manage my tasks. Select ONE action:
     - 'create': content = a specific, actionable objective I can complete and verify
     - 'update': content = my progress notes, task_id = id
     - 'check': returns all open tasks
-    - 'done': task_id = id
+    - 'done': task_id 
     """
     if _task_db is None:
         logger.error("Task Tool: Task DB is not initialized.")
@@ -31,7 +31,7 @@ async def task(
 
     if action == "create":
         task_id = await _task_db.create(content.strip())
-        return f"I created task {task_id}: {content.strip()}"
+        return f"I created a task: '{task_id}' - {content.strip()}"
 
     if action == "check":
         tasks = await _task_db.get_open()
@@ -39,17 +39,17 @@ async def task(
             return "I have nothing planned right now."
         lines = []
         for t in tasks:
-            line = f"[{t['status']}] {t['id']}: {t['objective']}"
+            line = f"[{t['status']}] {t['task_id']}: {t['objective']}"
             if t["scratchpad"]:
                 line += f"\n  Notes: {t['scratchpad']}"
             lines.append(line)
         return "\n".join(lines)
-
+    
     if action == "update":
         if not task_id:
-            return "Must provide a 'task_id' to update."
+            return "I have find the 'task_id' for update."
         await _task_db.update(task_id.strip(), content.strip())
-        return f"I updated task {task_id.strip()}."
+        return f"I updated task '{task_id}': {content.strip()}."
 
     if action == "done":
         if not task_id:

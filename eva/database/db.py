@@ -83,6 +83,21 @@ class SQLiteHandler:
             await conn.executemany(query, params_list)
             await conn.commit()
 
+    async def execute_insert(
+        self,
+        query: str,
+        params: tuple[Any, ...] = (),
+        db_name: str = SQLITE_DB_NAME,
+    ) -> int:
+        """Execute an INSERT query and return SQLite lastrowid atomically."""
+        conn = await self._get_connection(db_name)
+        async with self._write_locks[db_name]:
+            cursor = await conn.execute(query, params)
+            await conn.commit()
+            if cursor.lastrowid is None:
+                raise RuntimeError("SQLite insert did not return lastrowid")
+            return int(cursor.lastrowid)
+
     async def fetchall(
         self,
         query: str,

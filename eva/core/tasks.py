@@ -5,7 +5,7 @@ Pure database operations. The Brain decides when to create/update tasks
 via the task tool; the Heart reads open tasks to build pulse prompts.
 """
 
-import uuid
+import re
 from datetime import datetime, timezone
 
 from config import logger
@@ -25,7 +25,8 @@ class TaskDB:
         await self._db.execute(
             """
             CREATE TABLE IF NOT EXISTS tasks (
-                id          TEXT PRIMARY KEY,
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                task_id     TEXT UNIQUE,
                 objective   TEXT NOT NULL,
                 status      TEXT NOT NULL DEFAULT 'open',
                 scratchpad  TEXT,
@@ -37,19 +38,28 @@ class TaskDB:
         self._initialized = True
 
     async def create(self, objective: str) -> str:
-        """Create a new task. Returns the short ID."""
-        task_id = uuid.uuid4().hex[:6]
+        """Create a new task. Returns a readable ID: firstword-index."""
+        prefix = self._first_word_slug(objective)
         now = datetime.now(timezone.utc).isoformat()
-        await self._db.execute(
-            "INSERT INTO tasks (id, objective, status, created_at, updated_at) VALUES (?, ?, 'open', ?, ?)",
-            (task_id, objective, now, now),
+        row_id = await self._db.execute_insert(
+            "INSERT INTO tasks (objective, status, created_at, updated_at) VALUES (?, 'open', ?, ?)",
+            (objective, now, now),
         )
+        task_id = f"{prefix}-{row_id}"
+        await self._db.execute("UPDATE tasks SET task_id = ? WHERE id = ?", (task_id, row_id))
         return task_id
+
+    @staticmethod
+    def _first_word_slug(text: str) -> str:
+        """Normalize first objective word for readable task IDs."""
+        first_word = (text or "").strip().split(maxsplit=1)[0].lower()
+        slug = re.sub(r"[^a-z0-9]+", "", first_word)
+        return slug or "task"
 
     async def get_open(self) -> list[dict]:
         """Return all non-done tasks, oldest first."""
         rows = await self._db.fetchall(
-            "SELECT id, objective, status, scratchpad FROM tasks WHERE status != 'done' ORDER BY created_at"
+            "SELECT task_id, objective, status, scratchpad FROM tasks WHERE status != 'done' ORDER BY id"
         )
         return [dict(r) for r in rows]
 
@@ -57,7 +67,7 @@ class TaskDB:
         """Update scratchpad and set status to in_progress."""
         now = datetime.now(timezone.utc).isoformat()
         await self._db.execute(
-            "UPDATE tasks SET scratchpad = ?, status = 'in_progress', updated_at = ? WHERE id = ?",
+            "UPDATE tasks SET scratchpad = ?, status = 'in_progress', updated_at = ? WHERE task_id = ?",
             (scratchpad, now, task_id),
         )
 
@@ -65,7 +75,7 @@ class TaskDB:
         """Mark a task as done."""
         now = datetime.now(timezone.utc).isoformat()
         await self._db.execute(
-            "UPDATE tasks SET status = 'done', updated_at = ? WHERE id = ?",
+            "UPDATE tasks SET status = 'done', updated_at = ? WHERE task_id = ?",
             (now, task_id),
         )
 
@@ -76,7 +86,7 @@ class TaskDB:
             return "No pending tasks."
         lines = []
         for t in tasks:
-            line = f"- task_id  {t['id']}: [{t['status']}]: {t['objective']}"
+            line = f"- task_id  {t['task_id']}: [{t['status']}]: {t['objective']}"
             if t["scratchpad"]:
                 line += f"\n  Notes: {t['scratchpad']}\n\n"
             lines.append(line)
