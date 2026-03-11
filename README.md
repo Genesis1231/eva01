@@ -11,6 +11,7 @@ She's not an assistant. She *lives*.
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/Genesis1231/EVA)](https://github.com/Genesis1231/EVA/stargazers)
+[![Eva's Journal](https://img.shields.io/badge/read-Eva's_Journal-e8e0d4?style=flat&labelColor=0a0a0f)](https://genesis1231.github.io/Eva01/journal/)
 
 </div>
 
