@@ -55,6 +55,7 @@ async def search(
 
 
 async def _search_website(query: str) -> str:
+    """ Search the web for relevant pages. Returns formatted list of results."""
     try:
         response = await _get_tavily().search(query, max_results=5)
         hits = response.get("results", [])
@@ -74,6 +75,7 @@ async def _search_website(query: str) -> str:
 
 
 async def _search_info(query: str) -> str:
+    """ Search for recent news and information. Returns a concise answer."""
     try:
         response = await _get_perplexity().ainvoke(query)
         content = re.sub(r"\[\d+\]", "", str(response.content))

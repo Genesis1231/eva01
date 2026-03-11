@@ -235,13 +235,13 @@ The tool layer is modular: each tool is a small capability that can be added or 
 |------|--------------|
 | **`speak`** | Sends text to Eva's voice/action pipeline so she can talk out loud |
 | **`stay_quiet`** | Lets Eva intentionally stay silent with an explicit reason |
-| **`show`** | Opens files/urls thru a device so she can show thing |
-| **`web_search`** | Searches the web for up-to-date information |
-| **`search_youtube`** | Finds a YouTube video  |
+| **`show`** | Opens files/urls thru a device so she can show things |
+| **`search`** | Unified search: `website` (Tavily), `info` (Perplexity), `youtube` (yt-dlp) |
+| **`read`** | Reads and digests content: `webpage` (Firecrawl + utility model compression) |
 | **`watch_video`** | Analyzes video content (Gemini API required) |
-| **`feel`** | Logs a concise internal feeling/monologue state |
+| **`task`** | Tracks self-directed goals and progress |
 
-Want to add your own tool? Drop a new module in `eva/tools/`, register it in the tool constructor flow, and Eva can start using it in decisions.
+Want to add your own tool? Drop a new module in `eva/tools/` with a `@tool` decorated function, and Eva picks it up automatically.
 
 
 ## 🗺️ Roadmap 

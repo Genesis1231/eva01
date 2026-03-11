@@ -34,7 +34,7 @@ system:
   camera: off #"http://127.0.0.1:5000/video"
 
   # Heartbeat interval in seconds. off/0 = disabled.
-  heartbeat: 60
+  heartbeat: 180
 
 models:
   # The core reasoning engine orchestrating EVA's personality and logic.
