@@ -8,7 +8,7 @@ Content:
 {content}
 </CONTEXT>
 
-Summarize this page's key information, especially about {query}.
+Summarize this page's key information.
 Extract facts, data, quotes, and main arguments.
 Preserve names, numbers, and specific details.
 In my own words. Max 300 words.

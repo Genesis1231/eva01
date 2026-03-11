@@ -7,14 +7,14 @@ from eva.core.app import wake
 
 
 def main():
+    logger.info("And on the seventh day, you created Eva.")
     try:
         asyncio.run(wake())
     except KeyboardInterrupt:
         pass
     finally:
-        logger.info("EVA has gone to sleep.")
+        logger.info("EVA has gone back to sleep.")
 
 
 if __name__ == "__main__":
-    logger.info("And on the seventh day, you created Eva.")
     main()

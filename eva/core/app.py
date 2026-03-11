@@ -119,7 +119,7 @@ async def assemble(
 
     # Brain — owns tools + workflow, Cortex owns LLM + prompt
     brain = Brain(
-        model_name=config.CHAT_MODEL,
+        model_name=config.MAIN_MODEL,
         action_buffer=action_buffer,
         memory=memory_db,
         people=people_db.get_all(),

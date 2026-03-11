@@ -22,7 +22,7 @@ class Config(BaseModel):
     )
     
     # Model settings
-    CHAT_MODEL: str = Field(validation_alias=AliasPath("models", "chat"))
+    MAIN_MODEL: str = Field(validation_alias=AliasPath("models", "main"))
     VISION_MODEL: str = Field(validation_alias=AliasPath("models", "vision"))
     STT_MODEL: str = Field(validation_alias=AliasPath("models", "stt"))
     TTS_MODEL: str = Field(validation_alias=AliasPath("models", "tts"))

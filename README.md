@@ -163,7 +163,7 @@ system:
 
 models:
   # Main reasoning model (conversation, decisions, personality).
-  chat: "anthropic:claude-opus-4-6"
+  main: "anthropic:claude-opus-4-6"
 
   # Vision model for image understanding.
   vision: "google_genai:gemini-2.5-flash"
@@ -185,7 +185,7 @@ Notes:
 ⚡ Setup for the best *performance*:
 ```yaml
 models:
-  chat: "anthropic:claude-opus-4-6" 
+  main: "anthropic:claude-opus-4-6" 
   vision: "google_genai:gemini-2.5-flash"
   stt: "faster-whisper"
   tts: "elevenlabs"
@@ -195,7 +195,7 @@ models:
 🆓 Setup for *completely free* if you have a decent GPU:
 ```yaml
 models:
-  chat: "ollama:qwen3"
+  main: "ollama:qwen3"
   vision: "ollama:llava"
   stt: "faster-whisper"
   tts: "kokoro"

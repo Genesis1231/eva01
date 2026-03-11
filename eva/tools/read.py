@@ -2,18 +2,15 @@
 
 import asyncio
 
-from langchain.chat_models import init_chat_model
 from langchain_core.tools import tool
 from typing import Literal
 
-from config import logger, eva_configuration as config
+from config import logger
 from eva.tools import ToolError
-from eva.utils.prompt import load_prompt
 
 _firecrawl = None
-_summarizer = None
-_COMPRESS_THRESHOLD = 2000  # chars — below this, return directly
-_MAX_CHARS = 30_000  # fetch limit before compression
+_MAX_CHARS = 15_000  # ~4k tokens — keeps Opus context manageable
+_EXCLUDE_TAGS = ["nav", "footer", "header", "aside", ".sidebar", "#ad", ".cookie"]
 
 
 def _get_firecrawl():
@@ -25,30 +22,26 @@ def _get_firecrawl():
     return _firecrawl
 
 
-def _get_summarizer():
-    global _summarizer
-    if _summarizer is None:
-        _summarizer = init_chat_model(config.UTILITY_MODEL, max_tokens=500)
-    return _summarizer
-
-
 @tool
-async def read(source: Literal["webpage"], url: str, query: str = "") -> str:
+async def read(source: Literal["webpage"], url: str) -> str:
     """
     I use this to read and digest content. Select the exact source:
     - 'webpage': read a webpage and extract its content
     """
 
     if source == "webpage":
-        return await _read_webpage(url, query)
+        return await _read_webpage(url)
 
-    return f"There is no '{source}' to read."
+    return f"I don't see '{source}' available to read."
 
 
-async def _read_webpage(url: str, query: str) -> str:
+async def _read_webpage(url: str) -> str:
     try:
         result = await asyncio.to_thread(
-            _get_firecrawl().scrape, url, formats=["markdown"]
+            _get_firecrawl().scrape, url,
+            formats=["markdown"],
+            only_main_content=True,
+            exclude_tags=_EXCLUDE_TAGS,
         )
         content = result.markdown or ""
         if not content:
@@ -57,26 +50,11 @@ async def _read_webpage(url: str, query: str) -> str:
         title = getattr(result, "metadata", None)
         title = title.title if title and hasattr(title, "title") else ""
 
-        # Short content — return directly
-        if len(content) <= _COMPRESS_THRESHOLD:
-            return f"I read '{title}' ({url}):\n\n{content}"
+        # Truncate if too long — Firecrawl already cleaned the content
+        if len(content) > _MAX_CHARS:
+            content = content[:_MAX_CHARS] + "\n\n[Content truncated]"
 
-        # Long content — compress with utility model
-        content = content[:_MAX_CHARS]
-        summary = await _compress(title, url, content, query)
-        return f"I read '{title}' ({url}):\n\n{summary}"
+        return f"I read '{title}' ({url}):\n\n{content}"
     except Exception as e:
         logger.error(f"read webpage error: {e}")
         raise ToolError(str(e), tool_name="read") from e
-
-
-async def _compress(title: str, url: str, content: str, query: str) -> str:
-    prompt = load_prompt("describe_webpage").format(
-        title=title, url=url, content=content, query=query or title
-    )
-    try:
-        response = await _get_summarizer().ainvoke(prompt)
-        return str(response.content)
-    except Exception as e:
-        logger.error(f"webpage compression failed: {e}")
-        return content[:2000] + "\n\n[Compression failed — showing truncated content]"

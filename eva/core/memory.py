@@ -46,7 +46,7 @@ class MemoryDB:
     # ── Distillation ─────────────────────────────────────────
 
     @staticmethod
-    def distill(messages: list, full: bool = False) -> list:
+    def distill(messages: list, full: bool = False, journal: bool = False) -> list:
         """Collapse completed feel/speak tool cycles into clean AIMessages.
         to de-noise and preserve the essence of feelings and speech for memory/journal.
         SAVE TOKENS too!
@@ -54,6 +54,9 @@ class MemoryDB:
         By default, only distills PREVIOUS turns (before the last HumanMessage).
         The current turn stays raw so the ReAct loop can continue.
         When full=True, distills ALL messages (used by flush at shutdown).
+        When journal=True, truncates tool results to their first line — keeps the
+        action reference ("I read ...", "I found ...") but drops bulky content
+        so the journal captures experience, not regurgitated external data.
         """
         if full:
             history = messages
@@ -101,9 +104,12 @@ class MemoryDB:
                 i += 1
                 continue
 
-            # Use tool return values as the distilled content
+            # Use tool return values as the distilled content.
+            # In journal mode, keep only the first line — external content
+            # (webpage summaries, search results) lives after the first \n.
             parts = [
-                tool_msgs[tc['id']] for tc in tool_calls
+                tool_msgs[tc['id']].split('\n', 1)[0] if journal else tool_msgs[tc['id']]
+                for tc in tool_calls
                 if tool_msgs.get(tc['id'])
             ]
             if parts:
@@ -190,8 +196,9 @@ class MemoryDB:
             logger.debug("MemoryDB: nothing to flush.")
             return
 
-        # Distill entire session — full=True treats all messages as history
-        distilled = self.distill(messages, full=True)
+        # Distill entire session — full=True treats all messages as history,
+        # journal=True truncates tool results to first line (experience > content)
+        distilled = self.distill(messages, full=True, journal=True)
 
         # Build conversation text from distilled messages
         parts = []

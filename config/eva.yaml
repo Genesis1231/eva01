@@ -40,7 +40,7 @@ models:
   # The core reasoning engine orchestrating EVA's personality and logic.
   # Common providers: "claude", "groq", "chatgpt", "mistral", "gemini", "llama"
   # Recommended: "claude-4.0-sonnet" (for highest emotional intelligence)
-  chat: "anthropic:claude-opus-4-6"
+  main: "anthropic:claude-opus-4-6"
 
   # The visual cortex: how EVA interprets images from her webcam or the user.
   # Uses LangChain format "provider:model" — e.g. "openai:gpt-4o-mini", "groq:llama-4-scout-17b-16e-instruct"
