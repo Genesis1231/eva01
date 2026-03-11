@@ -76,8 +76,8 @@ class TaskDB:
             return "No pending tasks."
         lines = []
         for t in tasks:
-            line = f"- [{t['status']}] {t['id']}: {t['objective']}"
+            line = f"- task_id  {t['id']}: [{t['status']}]: {t['objective']}"
             if t["scratchpad"]:
-                line += f"\n  Notes: {t['scratchpad']}"
+                line += f"\n  Notes: {t['scratchpad']}\n\n"
             lines.append(line)
         return "My tasks:\n" + "\n".join(lines)

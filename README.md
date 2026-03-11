@@ -192,11 +192,24 @@ models:
   tts: "kokoro"
   utility: "ollama:llama3.1"
 ```
-
 ### ▶️ Run 
+
 
 ```bash
 python main.py
+```
+
+### Personal Customization
+
+Use the ID manager to setup people for face and voice recognition:
+
+```bash
+python idconfig.py
+
+1. Register a new ID. 
+2. Put 3+ face images in `data/faces/{id}` folder.
+3. Follow the instruction to record 5 voice samples.
+4. Done!
 ```
 
 ### 🖥️ Interface 
