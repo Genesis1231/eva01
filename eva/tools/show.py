@@ -1,7 +1,7 @@
 """EVA's show tool — opens a URL on screen via the browser."""
 
 from langchain_core.tools import tool
-from torch.cuda import device
+from typing import Literal
 from eva.actions.action_buffer import ActionBuffer
 
 
@@ -9,7 +9,7 @@ def make_show_tool(action_buffer: ActionBuffer):
     """Create a show tool bound to the given ActionBuffer."""
 
     @tool
-    async def show(device: str = "browser", url: str = "") -> str:
+    async def show(device: Literal["browser"] = "browser", url: str = "") -> str:
         """
         I use this to show something with my device. 
         select 'browser' when I want someone to see a webpage, video, or anything with a URL.
