@@ -11,10 +11,8 @@ VoiceActor:
 
 import asyncio
 from config import logger
-from typing import Optional
 
 from .speaker import Speaker
-from .audio_player import AudioPlayer
 from ..action_buffer import ActionBuffer, ActionEvent
 from ..base import BaseAction
 
@@ -27,7 +25,7 @@ class VoiceActor(BaseAction):
 
     def __init__(self, speaker: Speaker):
         self.speaker = speaker or Speaker()
-        self.current_speech_task: Optional[asyncio.Task] = None
+        self.current_speech_task: asyncio.Task | None = None
         self.is_speaking: bool = False
 
     def register(self, buffer: ActionBuffer) -> None:

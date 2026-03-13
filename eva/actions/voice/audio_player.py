@@ -3,9 +3,7 @@ AudioPlayer: Audio playback for streams and files.
 All methods are blocking — wrap with asyncio.to_thread() in async contexts.
 
 """
-
-from typing import Optional
-
+from config import logger
 import sounddevice as sd
 import mpv
 
@@ -26,9 +24,9 @@ class AudioPlayer:
     stop_playback: Interrupt all playback.
     """
     def __init__(self):
-        self.player: Optional[mpv.MPV] = None
+        self.player: mpv.MPV | None = None
         self._stop_event: bool = False
-        self._current_stream: Optional[sd.OutputStream] = None
+        self._current_stream: sd.OutputStream | None = None
 
     def stop_playback(self) -> None:
         """Stop all active audio playback immediately."""
@@ -47,7 +45,7 @@ class AudioPlayer:
                 self.player.terminate()
                 self.player = None
         except Exception:
-            pass
+            logger.warning("AudioPlayer: error while stopping mpv player, it may already be stopped.")
 
     def play_pcm(self, samples, sample_rate: int) -> None:
         """Play raw PCM (numpy float32 array) via sounddevice. Blocks until done."""
@@ -85,6 +83,7 @@ class AudioPlayer:
                     
         except Exception as e:
             # If aborted, this is expected
+            logger.warning("AudioPlayer: error while playing PCM audio.")
             pass
         finally:
             self._current_stream = None
@@ -98,6 +97,7 @@ class AudioPlayer:
             self.player.play(path)
             self.player.wait_for_playback()
         except Exception as e:
+            logger.error(f"AudioPlayer: error while playing stream: {e}")
             raise Exception(f"Error: Failed to play stream: {e}")
         finally:
             if self.player:

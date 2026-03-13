@@ -12,7 +12,7 @@ def make_show_tool(action_buffer: ActionBuffer):
     async def show(device: Literal["browser"] = "browser", url: str = "") -> str:
         """
         I use this to show something with my device. 
-        select 'browser' when I want someone to see a webpage, video, or anything with a URL.
+        select 'browser' when I want to show a webpage, video, or anything with a URL.
         I am pretty careful with the URL I provide, since it will be opened directly.
         """
         

@@ -9,12 +9,9 @@ import asyncio
 import os
 import secrets
 from pathlib import Path
-from io import BytesIO
 from pydub import AudioSegment
 from typing import Optional
 
-import sounddevice as sd
-import soundfile as sf
 import numpy as np
 from config import logger
 from kokoro_onnx import Kokoro
@@ -50,6 +47,11 @@ class KokoroSpeaker:
 
     def eva_speak(self, text: str, language: Optional[str] = None) -> None:
         """Speak the given text using Kokoro TTS. Blocking — run via to_thread."""
+        
+        if not self._model:
+            logger.error("KokoroSpeaker: TTS model not initialized.")
+            return
+        
         try:
             samples, sample_rate = self._model.create(
                 text=text,
@@ -67,6 +69,11 @@ class KokoroSpeaker:
         media_folder: str
     ) -> Optional[str]:
         """Generate wav from text and save to the media folder."""
+
+        if not self._model:
+            logger.error("KokoroSpeaker: TTS model not initialized.")
+            return
+    
         
         filename = f"{secrets.token_hex(16)}.mp3"
         file_path = os.path.join(media_folder, "audio", filename)
@@ -110,7 +117,5 @@ class KokoroSpeaker:
         """Release the ONNX session and voice data."""
         if hasattr(self, '_model') and self._model:
             self._model.sess._sess = None
-            self._model.sess = None
-            self._model.voices = None
             self._model = None
             logger.debug("KokoroSpeaker: ONNX session released.")

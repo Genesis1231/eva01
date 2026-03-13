@@ -5,7 +5,6 @@ ActionSystem:
 """
 
 import asyncio
-from typing import List
 from config import logger
 from .action_buffer import ActionBuffer
 from .base import BaseAction
@@ -14,7 +13,7 @@ class MotorSystem:
     def __init__(
         self, 
         action_buffer: ActionBuffer, 
-        actions: List[BaseAction] | None = None
+        actions: list[BaseAction] | None = None
     ):
         self.buffer = action_buffer
         self.actions = actions or []

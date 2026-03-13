@@ -7,8 +7,7 @@ Speaker factory: selects TTS model (edge/elevenlabs/kokoro) and delegates.
 
 from datetime import datetime
 from config import logger, DATA_DIR
-from typing import Dict, Callable, Optional
-from pathlib import Path
+from typing import Callable
 
 class Speaker:
     """
@@ -25,7 +24,7 @@ class Speaker:
         self._language: str = language
         self.model = None
     
-    def _get_model_factory(self) -> Dict[str, Callable]:
+    def _get_model_factory(self) -> dict[str, Callable]:
         return {
             "EDGE"       : self._create_edge_model,
             "ELEVENLABS" : self._create_elevenlab_model,
@@ -80,7 +79,7 @@ class Speaker:
 
         self.model.stop_playback()
         
-    def speak(self, answer: str, language: Optional[str] = "en"):
+    def speak(self, answer: str, language: str = "en"):
         """ Speak the given text. Blocking — run via to_thread. """
 
         if self.model is None or not hasattr(self.model, 'eva_speak'):

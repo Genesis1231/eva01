@@ -10,7 +10,6 @@ import os
 import tempfile
 import asyncio
 import secrets
-from typing import Optional
 
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings, stream
@@ -24,7 +23,7 @@ class ElevenLabsSpeaker:
         self.audio_player: AudioPlayer = AudioPlayer()
         self.voice: str = voice # voice could be configured in the future
         
-    def eva_speak(self, text: str, language: Optional[str] = None) -> None:
+    def eva_speak(self, text: str, language: str | None = None) -> None:
         """Speak the given text using ElevenLabs. Blocking — run via to_thread."""
         model_name = "eleven_flash_v2" if language == "en" else "eleven_v3"
 
@@ -41,8 +40,20 @@ class ElevenLabsSpeaker:
         except Exception as e:
             logger.error(f"Error during ElevenLabs synthesis: {e}")
             
-    async def generate_audio(self, text: str, language: Optional[str], media_folder: str) -> Optional[str]:
-        """ Generate mp3 from text using ElevenLabs """
+    async def generate_audio(
+        self, text: str, 
+        language: str | None, 
+        media_folder: str
+    ) -> str | None:
+        """ 
+        Generate mp3 from text using ElevenLabs 
+        Args:
+            text: The text to synthesize.
+            language: The language of the text.
+            media_folder: The folder to save the generated audio.
+        Returns:
+            The relative path to the generated audio file, or None if generation failed.
+        """
         
         model_name: str = "eleven_flash_v2" if language == "en" else "eleven_v3"
         

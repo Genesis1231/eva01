@@ -6,7 +6,6 @@ Brain calls cortex.respond(messages) — everything else is internal.
 """
 
 from datetime import datetime
-from typing import List, Set, Dict, Any
 from langchain.chat_models import init_chat_model
 from langchain_core.tools import BaseTool
 from langchain_core.messages import (
@@ -43,8 +42,8 @@ class Cortex:
     async def respond(
         self,
         constructor: PromptConstructor,
-        messages: List[BaseMessage],
-        present_people: Set[str],
+        messages: list[BaseMessage],
+        present_people: set[str],
         memory: str = "",
     ) -> AIMessage:
         """Construct prompt, trim messages, invoke LLM, return response."""

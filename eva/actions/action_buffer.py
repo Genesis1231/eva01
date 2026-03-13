@@ -13,7 +13,7 @@ import asyncio
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Callable, Awaitable, Optional, Dict, Any, List
+from typing import Callable, Awaitable, Any
 
 from config import logger
 
@@ -22,11 +22,11 @@ from config import logger
 class ActionEvent:
     """A single outgoing action command."""
     type: str
-    content: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    content: str | None = None
+    metadata: dict[str, Any] | None = None
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert the action event to a dictionary."""
         d = {
             "type": self.type,
@@ -54,7 +54,7 @@ class ActionBuffer:
 
     def __init__(self) -> None:
         self._queue: asyncio.Queue[ActionEvent] = asyncio.Queue()
-        self._handlers: Dict[str, List[ActionHandler]] = defaultdict(list)
+        self._handlers: dict[str, list[ActionHandler]] = defaultdict(list)
         self._running = False
 
     # ── Registration (called at startup by action consumers) ──────────────
@@ -72,8 +72,8 @@ class ActionBuffer:
     async def put(
         self,
         action_type: str,
-        content: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        content: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Push an action event onto the bus."""
         event = ActionEvent(

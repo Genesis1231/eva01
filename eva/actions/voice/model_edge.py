@@ -9,7 +9,6 @@ import asyncio
 import os
 import secrets
 import tempfile
-from typing import Optional
 
 import edge_tts
 from config import logger
@@ -40,13 +39,13 @@ class EdgeSpeaker:
         self.voice = voice
         self.audio_player = AudioPlayer()
 
-    def _voice_for(self, language: Optional[str]) -> str:
+    def _voice_for(self, language: str | None) -> str:
         """Get the appropriate voice for the given language."""
         # For now, just return the default voice
         # Could be extended with language-specific voice mapping
         return self.voice
 
-    def eva_speak(self, text: str, language: Optional[str] = None) -> None:
+    def eva_speak(self, text: str, language: str | None = None) -> None:
         """Speak the given text using Edge TTS. Blocking — run via to_thread."""
         try:
             voice = self._voice_for(language)
@@ -60,7 +59,7 @@ class EdgeSpeaker:
         except Exception as e:
             logger.error(f"Error during Edge TTS synthesis: {e}")
 
-    async def generate_audio(self, text: str, language: Optional[str], media_folder: str) -> Optional[str]:
+    async def generate_audio(self, text: str, language: str | None, media_folder: str) -> str | None:
         """Generate mp3 from text and save to the media folder."""
         
         filename = f"{secrets.token_hex(16)}.mp3"

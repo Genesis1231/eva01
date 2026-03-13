@@ -1,7 +1,7 @@
 [project]
 name = "eva01"
 version = "0.1.1"
-description = "EVA01 — an autonomous AI agent with memory, voice, and vision."
+description = "Eva01 - an AI being."
 requires-python = ">=3.10"
 readme = "README.md"
 license = { file = "LICENSE" }
